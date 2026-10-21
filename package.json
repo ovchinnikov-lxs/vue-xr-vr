@@ -1,0 +1,22 @@
+{
+  "name": "vue-xr-ui-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm --filter playground dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vue-tsc": "^3.1.0",
+    "three": "^0.186.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "@iwer/sem>three": "$three",
+      "@iwer/devui>three": "$three"
+    }
+  }
+}

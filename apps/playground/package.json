@@ -1,0 +1,25 @@
+{
+  "name": "playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:https": "vite --host --mode https",
+    "build": "vue-tsc -p tsconfig.json && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "vue-tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tresjs/core": "^5.9.3",
+    "three": "^0.186.1",
+    "vue": "^3.5.44",
+    "vue-xr-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "@types/webxr": "^0.5.24",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "vite": "^8.3.5"
+  }
+}
