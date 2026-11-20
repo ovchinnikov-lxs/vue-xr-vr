@@ -87,7 +87,13 @@ Vue app (DOM)                     <XrEnterButton>, useXr()
 | `<XrBox>` | Transparent flex container (the `<div>`). |
 | `<XrText>` | Text in the theme's type scale. |
 | `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`. |
+| `<XrToggle>` | On/off switch with a label, `v-model`. |
+| `<XrSlider>` | Number in a range, `v-model`, `min` / `max` / `step`. Drag with a ray or slide a fingertip along it. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
+
+Every control takes the same input: mouse, controller ray, hand pinch ray and
+a fingertip poke. A press counts on release however long it is held, and a
+control keeps the pointer until release (like DOM pointer capture).
 
 Composables: `useXr()` (session state, `enterVR`, `enterAR`, `exit`),
 `useXrFrame(cb)` (per-frame callback that also runs inside the headset),
@@ -95,7 +101,7 @@ Composables: `useXr()` (session state, `enterVR`, `enterAR`, `exit`),
 
 ## Roadmap
 
-1. Components: slider, toggle, list, tooltip, tabs, keyboard.
+1. Components: list, tooltip, tabs, keyboard.
 2. Grabbable and follow-the-user panels, billboard, snap to wall/table (MR planes and anchors).
 3. Focus and keyboard navigation, accessibility.
 4. Playground as an in-headset Storybook.

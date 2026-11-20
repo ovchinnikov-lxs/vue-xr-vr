@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef } from 'vue'
 import type { Mesh } from 'three'
-import { XrBox, XrButton, XrPanel, XrText, darkTheme, lightTheme, useXr, useXrFrame, useXrTheme } from 'vue-xr-ui'
+import { XrBox, XrButton, XrPanel, XrSlider, XrText, XrToggle, darkTheme, lightTheme, useXr, useXrFrame, useXrTheme } from 'vue-xr-ui'
 
 const xr = useXr()
 const theme = useXrTheme()
 const count = ref(0)
+const sound = ref(true)
+const volume = ref(40)
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -46,5 +48,13 @@ useXrFrame((delta) => {
       <XrButton variant="secondary" :disabled="count === 0" @click="count = 0">Reset</XrButton>
       <XrButton variant="ghost" @click="toggleTheme">Theme</XrButton>
     </XrBox>
+
+    <XrPanel variant="sunken" :padding="4" :gap="2">
+      <XrToggle v-model="sound">Sound</XrToggle>
+      <XrBox direction="row" align="center" :gap="4">
+        <XrSlider v-model="volume" name="volume" :disabled="!sound" :ui="{ flexGrow: 1 }" />
+        <XrText variant="label">{{ sound ? `Volume: ${volume}` : 'Muted' }}</XrText>
+      </XrBox>
+    </XrPanel>
   </XrPanel>
 </template>

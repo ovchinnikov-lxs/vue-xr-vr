@@ -11,10 +11,11 @@ interface XrTest {
   hasText(label: string): boolean
   state(): { presenting: boolean; mode: string | null; emulator: boolean }
   size(label: string): [number, number] | null
-  screenPoint(label: string): { x: number; y: number }
+  screenPoint(label: string, fx?: number): { x: number; y: number }
   setInputMode(mode: 'controller' | 'hand'): Promise<void>
-  aim(hand: Hand, label: string): void
-  poke(hand: Hand, label: string): Promise<void>
+  aim(hand: Hand, label: string, fx?: number): void
+  rayDrag(hand: Hand, label: string, fromFx: number, toFx: number): Promise<void>
+  poke(hand: Hand, label: string, fromFx?: number, toFx?: number): Promise<void>
   pinch(hand: Hand): Promise<void>
   frames(n: number): Promise<void>
   frameTime(): number
@@ -70,9 +71,35 @@ export class Scene {
     return this.page.evaluate(() => window.__xrTest!.exit())
   }
 
-  async click(label: string) {
-    const point = await this.page.evaluate((l) => window.__xrTest!.screenPoint(l), label)
+  /**
+   * Labels name the text inside a control; `#name` finds a control by its
+   * `name` attr instead. `fx` picks a point from the left edge (0) to the
+   * right edge (1).
+   */
+  async screenPoint(label: string, fx = 0.5) {
+    // Layout lags a state change by a frame; measure once it has settled.
+    await this.page.evaluate(() => window.__xrTest!.frames(2))
+    return this.page.evaluate(([l, f]) => window.__xrTest!.screenPoint(l, f), [label, fx] as const)
+  }
+
+  async click(label: string, fx = 0.5) {
+    const point = await this.screenPoint(label, fx)
     await this.page.mouse.click(point.x, point.y)
+  }
+
+  /** Presses the mouse at `fromFx` across a control, drags to `toFx`, releases. */
+  async mouseDrag(label: string, fromFx: number, toFx: number) {
+    const from = await this.screenPoint(label, fromFx)
+    const to = await this.screenPoint(label, toFx)
+    await this.page.mouse.move(from.x, from.y)
+    await this.page.mouse.down()
+    await this.page.mouse.move(to.x, to.y, { steps: 8 })
+    await this.page.mouse.up()
+  }
+
+  /** Holds a controller trigger at `fromFx` across a control and sweeps the ray to `toFx`. */
+  rayDrag(hand: Hand, label: string, fromFx: number, toFx: number) {
+    return this.page.evaluate(([h, l, a, b]) => window.__xrTest!.rayDrag(h, l, a, b), [hand, label, fromFx, toFx] as const)
   }
 
   async expectText(label: string) {
@@ -83,8 +110,9 @@ export class Scene {
     return this.page.evaluate((m) => window.__xrTest!.setInputMode(m), mode)
   }
 
-  poke(hand: Hand, label: string) {
-    return this.page.evaluate(([h, l]) => window.__xrTest!.poke(h, l), [hand, label] as const)
+  /** Taps a control with a fingertip, or presses at `fromFx` and slides to `toFx`. */
+  poke(hand: Hand, label: string, fromFx = 0.5, toFx = fromFx) {
+    return this.page.evaluate(([h, l, a, b]) => window.__xrTest!.poke(h, l, a, b), [hand, label, fromFx, toFx] as const)
   }
 
   /** Aim a hand's ray at a label and pinch. */
@@ -94,9 +122,9 @@ export class Scene {
     await this.page.evaluate((h) => window.__xrTest!.pinch(h), hand)
   }
 
-  /** Aim a controller ray at a label and pull the trigger (held for `holdMs`). */
-  async rayClick(hand: Hand, label: string, holdMs = 0) {
-    await this.page.evaluate(([h, l]) => window.__xrTest!.aim(h, l), [hand, label] as const)
+  /** Aim a controller ray at a label (at `fx` across it) and pull the trigger (held for `holdMs`). */
+  async rayClick(hand: Hand, label: string, { fx = 0.5, holdMs = 0 } = {}) {
+    await this.page.evaluate(([h, l, f]) => window.__xrTest!.aim(h, l, f), [hand, label, fx] as const)
     // Let the ray settle on the target first (hover), then click.
     await this.page.evaluate(() => window.__xrTest!.frames(3))
     await this.page.evaluate(([h, ms]) => window.__xrTest!.pullTrigger(h, ms), [hand, holdMs] as const)

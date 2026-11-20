@@ -25,8 +25,18 @@ export default defineComponent({
     const textOf = (t: Text) => String((t.properties.value as { text?: unknown }).text ?? '')
     const findText = (label: string) => allTexts().find((t) => textOf(t) === label)
 
-    /** The clickable component for a label: the text's parent if it is a uikit container. */
+    /**
+     * The component for a label: the text's parent if it is a uikit container.
+     * `#name` finds a component by its three.js name (the `name` attr)
+     * instead, and `#name.part` a named part inside it (a slider's `track`).
+     */
     const targetFor = (label: string): UikitComponent => {
+      if (label.startsWith('#')) {
+        let found: Object3D | undefined = tres.scene.value
+        for (const name of label.slice(1).split('.')) found = found?.getObjectByName(name)
+        if (!(found instanceof UikitComponent)) throw new Error(`No component "${label}"`)
+        return found as unknown as UikitComponent
+      }
       const text = findText(label)
       if (!text) throw new Error(`No text "${label}" in the scene`)
       return text.parentContainer.value ?? text
@@ -38,8 +48,11 @@ export default defineComponent({
       return node
     }
 
-    /** World-space centre of a uikit component's panel. */
-    const worldCenter = (c: UikitComponent): Vector3 => {
+    /**
+     * World-space point on a uikit component's panel, `fx` of the way from
+     * its left edge (0) to its right edge (1), vertically centred.
+     */
+    const worldPoint = (c: UikitComponent, fx = 0.5): Vector3 => {
       const panel = c.globalPanelMatrix.value
       if (!panel) throw new Error('Component has no layout yet')
       // uikit sets a root's own matrix to its panel transform (scaled to the
@@ -48,7 +61,18 @@ export default defineComponent({
       root.parent?.updateWorldMatrix(true, false)
       const placement = new Matrix4().compose(root.position, root.quaternion, root.scale)
       if (root.parent) placement.premultiply(root.parent.matrixWorld)
-      return new Vector3().applyMatrix4(placement.multiply(panel))
+      // The panel matrix maps a unit square centred on the origin onto the panel.
+      return new Vector3(fx - 0.5, 0, 0).applyMatrix4(placement.multiply(panel))
+    }
+
+    /** Moves a controller or hand in front of a point on a label and aims its ray at it. */
+    const aim = (hand: 'left' | 'right', label: string, fx = 0.5) => {
+      const target = worldPoint(targetFor(label), fx)
+      const input = activeInput(hand)
+      const from = target.clone().add(new Vector3(hand === 'left' ? -0.15 : 0.15, -0.1, 0.4))
+      const q = new Quaternion().setFromRotationMatrix(new Matrix4().lookAt(from, target, new Vector3(0, 1, 0)))
+      input.position.set(from.x, from.y, from.z)
+      input.quaternion.set(q.x, q.y, q.z, q.w)
     }
 
     const eventLog: string[] = []
@@ -105,11 +129,11 @@ export default defineComponent({
         emulator: xr.store.value?.getState().emulator != null,
       }),
       size: (label: string) => targetFor(label).size.value ?? null,
-      /** CSS pixel position of a label's component on the 2D canvas. */
-      screenPoint(label: string) {
+      /** CSS pixel position of a point on a label's component (see worldPoint) on the 2D canvas. */
+      screenPoint(label: string, fx = 0.5) {
         const camera = tres.camera.value
         if (!camera) throw new Error('No camera')
-        const p = worldCenter(targetFor(label)).project(camera)
+        const p = worldPoint(targetFor(label), fx).project(camera)
         const rect = tres.renderer.domElement.getBoundingClientRect()
         return { x: rect.left + ((p.x + 1) / 2) * rect.width, y: rect.top + ((1 - p.y) / 2) * rect.height }
       },
@@ -133,33 +157,57 @@ export default defineComponent({
         if (!ready()) throw new Error(`Input did not switch to ${mode}`)
         await frames(2)
       },
-      /** Moves a controller or hand in front of a label and aims its ray at it. */
-      aim(hand: 'left' | 'right', label: string) {
-        const target = worldCenter(targetFor(label))
-        const input = activeInput(hand)
-        const from = target.clone().add(new Vector3(hand === 'left' ? -0.15 : 0.15, -0.1, 0.4))
-        const q = new Quaternion().setFromRotationMatrix(new Matrix4().lookAt(from, target, new Vector3(0, 1, 0)))
-        input.position.set(from.x, from.y, from.z)
-        input.quaternion.set(q.x, q.y, q.z, q.w)
+      aim,
+      /** Aims a controller at `fromFx` across a label, holds the trigger, sweeps to `toFx`, releases. */
+      async rayDrag(hand: 'left' | 'right', label: string, fromFx: number, toFx: number) {
+        const controller = device().controllers[hand]
+        if (!controller) throw new Error(`No ${hand} controller`)
+        aim(hand, label, fromFx)
+        await frames(3)
+        controller.updateButtonValue('trigger', 1)
+        await frames(2)
+        for (let i = 1; i <= 8; i++) {
+          aim(hand, label, fromFx + ((toFx - fromFx) * i) / 8)
+          await frames(1)
+        }
+        // Rest on the target before letting go, as a person would.
+        await frames(3)
+        controller.updateButtonValue('trigger', 0)
+        await frames(2)
       },
       /**
        * Pokes a label with the index fingertip: the hand starts 5 cm in front
-       * of the button, pushes 1 cm into it, and pulls back out.
+       * of it at `fromFx`, pushes 5 mm in, slides to `toFx` (a tap when they
+       * are equal), and pulls back out.
        */
-      async poke(hand: 'left' | 'right', label: string) {
+      async poke(hand: 'left' | 'right', label: string, fromFx = 0.5, toFx = fromFx) {
         const handInput = device().hands[hand]
         if (!handInput) throw new Error(`No ${hand} hand`)
         handInput.poseId = 'default'
         handInput.quaternion.set(0, 0, 0, 1)
-        const target = worldCenter(targetFor(label))
+        const component = targetFor(label)
         // Where the fingertip sits relative to the hand origin depends on the
-        // pose, so measure it: move once, read the tip, then correct.
-        const start = target.clone().add(new Vector3(0, 0, 0.05))
+        // pose, so measure it: move once, read the tip, then correct. Measure
+        // well clear of the UI, or the fingertip may press something on the way.
+        const start = worldPoint(component, fromFx).add(new Vector3(0, 0, 0.3))
         handInput.position.set(start.x, start.y, start.z)
-        await frames(2)
-        const tipOffset = fingertipWorld(hand).sub(start)
-        for (const depth of [0.05, 0.03, 0.01, 0, -0.005, -0.01, -0.01, 0, 0.02, 0.05]) {
-          const p = target.clone().sub(tipOffset).add(new Vector3(0, 0, depth))
+        // Joint poses reach the scene a frame or two later; wait until the tip settles.
+        let tip = fingertipWorld(hand)
+        for (let i = 0; i < 10; i++) {
+          await frames(1)
+          const next = fingertipWorld(hand)
+          const settled = next.distanceTo(tip) < 0.0005
+          tip = next
+          if (settled) break
+        }
+        const tipOffset = tip.sub(start)
+        const steps: Array<[number, number]> = [
+          ...[0.05, 0.03, 0.01, 0].map((d): [number, number] => [fromFx, d]),
+          ...Array.from({ length: 8 }, (_, i): [number, number] => [fromFx + ((toFx - fromFx) * (i + 1)) / 8, -0.005]),
+          ...[0, 0.02, 0.05].map((d): [number, number] => [toFx, d]),
+        ]
+        for (const [fx, depth] of steps) {
+          const p = worldPoint(component, fx).sub(tipOffset).add(new Vector3(0, 0, depth))
           handInput.position.set(p.x, p.y, p.z)
           await frames(1)
         }

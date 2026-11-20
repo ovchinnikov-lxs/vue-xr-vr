@@ -2,12 +2,8 @@ import { defineComponent, h, type PropType } from 'vue'
 import { Container } from '@pmndrs/uikit'
 import { useXrTheme } from '../composables/useXrTheme'
 import { slotText, useUikitNode } from '../runtime/node'
+import { usePress } from '../runtime/press'
 import { XrText } from './XrText'
-
-interface ButtonPointerEvent {
-  pointerId?: number
-  object?: { setPointerCapture?(id: number): void }
-}
 
 export type XrButtonVariant = 'primary' | 'secondary' | 'ghost'
 export type XrButtonSize = 'sm' | 'md' | 'lg'
@@ -36,8 +32,7 @@ export const XrButton = defineComponent({
   },
   setup(props, { slots, emit }) {
     const theme = useXrTheme()
-    /** Pointers that went down on this button and have not been released. */
-    const pressed = new Set<number>()
+    const press = usePress({ disabled: () => props.disabled, onPress: (event) => emit('click', event) })
 
     const { render } = useUikitNode(
       (initial) => new Container(initial),
@@ -75,21 +70,7 @@ export const XrButton = defineComponent({
                 // there is no cursor and no physical click.
                 active: { backgroundColor: palette.active, transformTranslateZ: -t.interaction.pressDepth },
               }),
-          // A press is a down then an up from the same pointer, however long
-          // it is held, like a DOM click. (@pmndrs/pointer-events drops the
-          // click after 300 ms, which loses slow pokes and held triggers.)
-          // The pointer is captured on down, as DOM does for touch: pressing
-          // sinks the button, which can move it out from under a ray or
-          // fingertip for a frame, and the release must still land here.
-          onPointerDown: (event: ButtonPointerEvent) => {
-            if (props.disabled || event.pointerId == null) return
-            pressed.add(event.pointerId)
-            event.object?.setPointerCapture?.(event.pointerId)
-          },
-          onPointerUp: (event: ButtonPointerEvent) => {
-            if (event.pointerId == null || !pressed.delete(event.pointerId)) return
-            if (!props.disabled) emit('click', event)
-          },
+          ...press,
           ...props.ui,
         }
       },

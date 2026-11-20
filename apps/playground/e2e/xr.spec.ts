@@ -40,7 +40,7 @@ test.describe('in the emulated Quest 3', () => {
     await page.getByRole('button', { name: 'Enter VR' }).click()
     await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
     // People in a headset press deliberately; a long press is still a click.
-    await scene.rayClick('right', 'Increment', 800)
+    await scene.rayClick('right', 'Increment', { holdMs: 800 })
     await scene.expectText('Count: 1')
   })
 })

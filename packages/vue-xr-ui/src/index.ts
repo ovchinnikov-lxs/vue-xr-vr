@@ -9,6 +9,8 @@ export { XrPanel } from './components/XrPanel'
 export { XrBox } from './components/XrBox'
 export { XrText } from './components/XrText'
 export { XrButton, type XrButtonVariant, type XrButtonSize } from './components/XrButton'
+export { XrToggle } from './components/XrToggle'
+export { XrSlider } from './components/XrSlider'
 export { XrEnterButton } from './components/XrEnterButton'
 
 export { useXr } from './composables/useXr'

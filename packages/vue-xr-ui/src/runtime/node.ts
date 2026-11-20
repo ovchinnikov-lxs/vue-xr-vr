@@ -1,5 +1,5 @@
 import { Comment, Fragment, Text, h, inject, markRaw, onBeforeUnmount, provide, useAttrs, watch, type Slots, type VNode, type VNodeChild } from 'vue'
-import type { Component as UikitComponent } from '@pmndrs/uikit'
+import { Container, type Component as UikitComponent } from '@pmndrs/uikit'
 import { FRAME_HUB, UIKIT_PARENT } from './context'
 
 type Properties = Record<string, unknown>
@@ -44,6 +44,9 @@ export function useUikitNode<T extends UikitComponent>(
   // resetProperties (not setProperties) so that removed keys are cleared too.
   watch(getProperties, (next) => node.resetProperties(next as never))
 
+  // `name` works like on any three.js object: scene.getObjectByName(...).
+  watch(() => attrs.name, (name) => (node.name = typeof name === 'string' ? name : ''), { immediate: true })
+
   provide(UIKIT_PARENT, node)
 
   if (isRoot) {
@@ -62,6 +65,19 @@ export function useUikitNode<T extends UikitComponent>(
     isRoot ? h('primitive', { ...attrs, object: node }, children as never) : h(Fragment, null, children as never)
 
   return { node, isRoot, render }
+}
+
+/**
+ * A uikit container that is part of a control's own anatomy (a slider's
+ * track, a toggle's thumb), created without a Vue component of its own.
+ * Children are added in call order.
+ */
+export function useChildNode(parent: UikitComponent, properties: () => Properties): Container {
+  const node = markRaw(new Container(properties() as never))
+  watch(properties, (next) => node.resetProperties(next as never))
+  parent.add(node)
+  onBeforeUnmount(() => node.dispose())
+  return node
 }
 
 /** Returns the slot's content as a string if it is plain text only, else undefined. */
