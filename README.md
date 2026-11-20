@@ -99,7 +99,7 @@ Vue app (DOM)                     <XrEnterButton>, useXr()
 | `<XrList>` / `<XrListItem>` | Scrolling list (drag with a ray or finger, mouse wheel); items have label, description, `selected`. A drag never selects. |
 | `<XrTooltip>` | Hint shown while a ray, fingertip or mouse hovers what it wraps. |
 | `<XrTextField>` | Single-line text input, `v-model`, `placeholder`, `type="password"`. Real caret: tap where to type. Physical keyboard works on desktop. Enter emits `submit`. |
-| `<XrKeyboard>` | On-screen keyboard, EN and RU layouts (or your own), Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
+| `<XrKeyboard>` | On-screen keyboard. `layouts`: built-in `en` `ru` `uk` `de` `fr` `es` and/or your own (`{ label, name, locale, rows }`), `v-model:layout`, `digits`, `symbols` (?123 page), `spaceLabel`, `keySize`, `enterLabel`. Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
 
@@ -115,8 +115,8 @@ Themes: `darkTheme`, `lightTheme`, `defineTheme(base, overrides)`, and
 `withAccent(theme, '#22c55e')`, which derives hover, pressed, text-on-accent
 (by contrast) and focus colours from one hex value.
 
-Text renders in Inter with Latin and Cyrillic (uikit's bundled fonts are
-Latin only). Each weight loads on first use, about 180 KB.
+Text renders in Inter with Latin (incl. French, German, Spanish letters) and Cyrillic (Russian, Ukrainian) (uikit's bundled fonts are
+Latin only). Each weight loads on first use, about 250 KB.
 
 ## Roadmap
 

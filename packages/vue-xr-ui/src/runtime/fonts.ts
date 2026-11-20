@@ -2,7 +2,7 @@
  * Inter with Latin and Cyrillic, as uikit MSDF fonts. uikit's own default
  * font covers Latin only: Russian text would render as blanks.
  *
- * Each weight is its own chunk (about 180 KB), loaded the first time text
+ * Each weight is its own chunk (about 250 KB), loaded the first time text
  * in that weight is shown. Rebuild with scripts/build-fonts.mjs.
  */
 const load = (file: Promise<{ default: unknown }>) => file.then((m) => m.default)

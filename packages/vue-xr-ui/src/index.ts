@@ -16,7 +16,7 @@ export { XrTooltip } from './components/XrTooltip'
 export { XrToggle } from './components/XrToggle'
 export { XrSlider } from './components/XrSlider'
 export { XrTextField } from './components/XrTextField'
-export { XrKeyboard, keyboardLayouts, type XrKeyboardLayout, type XrKeyboardKey } from './components/XrKeyboard'
+export { XrKeyboard, keyboardLayouts, type XrKeyboardLayout, type XrKeyboardLayoutName, type XrKeyboardKey } from './components/XrKeyboard'
 export { XrThemeProvider } from './components/XrThemeProvider'
 export { XrEnterButton } from './components/XrEnterButton'
 

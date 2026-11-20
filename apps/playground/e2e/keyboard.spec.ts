@@ -33,6 +33,44 @@ test.describe('text field and keyboard in the browser', () => {
     await expect.poll(async () => (await scene.inputState(field)).value).toBe('')
   })
 
+  test('the language tabs pick the layout; ?123 opens symbols', async ({ scene }) => {
+    await scene.click(field)
+    await scene.click('UK')
+    await expect.poll(() => scene.isShown('#key-ї')).toBe(true)
+    for (const key of ['#key-shift', '#key-ї']) await scene.click(key)
+    await scene.click('FR')
+    await expect.poll(() => scene.isShown('#key-ç')).toBe(true)
+    await scene.click('#key-ç')
+    await scene.click('#key-symbols')
+    await expect.poll(() => scene.isShown('#key-@')).toBe(true)
+    expect(await scene.isShown('#key-shift')).toBe(true)
+    await scene.click('#key-@')
+    await scene.click('ABC')
+    await expect.poll(() => scene.isShown('#key-a')).toBe(true)
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('Їç@')
+    // The layout key cycles to the next language and moves the tabs with it.
+    await scene.click('#key-layout')
+    await expect.poll(() => scene.isShown('#key-ñ')).toBe(true)
+    await scene.expectText('Español')
+  })
+
+  test('holding Backspace keeps deleting', async ({ scene, page }) => {
+    await scene.click(field)
+    await expect.poll(async () => (await scene.inputState(field)).focused).toBe(true)
+    await page.keyboard.type('hello world')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('hello world')
+    const key = await scene.screenPoint('#key-backspace')
+    await page.mouse.move(key.x, key.y)
+    await page.mouse.down()
+    await page.waitForTimeout(100)
+    expect((await scene.inputState(field)).value).toBe('hello worl')
+    await expect.poll(async () => (await scene.inputState(field)).value.length).toBeLessThan(8)
+    await page.mouse.up()
+    const left = (await scene.inputState(field)).value
+    await page.waitForTimeout(300)
+    expect((await scene.inputState(field)).value).toBe(left)
+  })
+
   test('a physical keyboard types into the field too', async ({ scene, page }) => {
     await scene.click(field)
     await expect.poll(async () => (await scene.inputState(field)).focused).toBe(true)
@@ -85,9 +123,10 @@ test.describe('keyboard in the emulated Quest 3', () => {
   test('fingertips type on the keyboard', async ({ scene }) => {
     await scene.rayClick('right', field)
     await scene.setInputMode('hand')
+    // (A poke here is held for about ten frames, which on a slow machine is
+    // long enough for Backspace to start repeating; held Backspace has its own test.)
     for (const key of ['#key-y', '#key-o']) await scene.poke('right', key)
-    await scene.poke('left', '#key-backspace')
-    await scene.poke('right', '#key-e')
-    await expect.poll(async () => (await scene.inputState(field)).value).toBe('ye')
+    await scene.poke('left', '#key-u')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('you')
   })
 })

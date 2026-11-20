@@ -23,14 +23,18 @@ mkdirSync(work, { recursive: true })
 const latin = ' °!\\"#$%&\'()*+,-./0123456789:;<=>?@ÄÖÜABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`äöüabcdefghijklmnopqrstuvwxyz{|}~ß§'
 let cyrillic = 'Ёё'
 for (let c = 0x410; c <= 0x44f; c++) cyrillic += String.fromCodePoint(c)
+// Latin-1 letters (French, Spanish, German...) and Ukrainian.
+let latinExtra = 'ŒœŸ¿¡'
+for (let c = 0xc0; c <= 0xff; c++) if (c !== 0xd7 && c !== 0xf7) latinExtra += String.fromCodePoint(c)
+cyrillic += 'ІіЇїЄєҐґ'
 const symbols = '–—«»…•№€₽←→↑↓⇧⇪⌫↵⏎✓×'
 const charsetFile = join(work, 'charset.txt')
-writeFileSync(charsetFile, latin + cyrillic + symbols)
+writeFileSync(charsetFile, [...new Set(latin + latinExtra + cyrillic + symbols)].join(''))
 
 const weights = { 400: '400Regular', 500: '500Medium', 600: '600SemiBold', 700: '700Bold' }
 for (const [weight, name] of Object.entries(weights)) {
   const ttf = require.resolve(`@expo-google-fonts/inter/${name}/Inter_${name}.ttf`)
-  execFileSync('npx', ['msdf-bmfont', '-f', 'json', '-o', join(work, `inter-${weight}`), '-s', '44', '-r', '4', '-m', '512,512', '-t', 'msdf', '-i', charsetFile, '--pot', ttf], { stdio: 'inherit' })
+  execFileSync('npx', ['msdf-bmfont', '-f', 'json', '-o', join(work, `inter-${weight}`), '-s', '44', '-r', '4', '-m', '1024,1024', '-t', 'msdf', '-i', charsetFile, '--pot', ttf], { stdio: 'inherit' })
   const font = JSON.parse(readFileSync(join(work, `Inter_${name}.json`), 'utf8'))
   const webp = await sharp(join(work, font.pages[0])).webp({ lossless: true }).toBuffer()
   const { charset: _charset, ...info } = font.info
