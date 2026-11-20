@@ -39,6 +39,17 @@ pnpm --filter playground dev:https   # self-signed cert, exposed on your LAN
 Open `https://<your-computer-ip>:5173` in the Quest browser, accept the
 certificate warning, press **Enter VR**.
 
+## Tests
+
+End-to-end tests drive the playground in headless Chromium with an emulated
+Quest 3: they click with the mouse, enter VR and AR, and press buttons with
+controller rays. They run in CI on every push.
+
+```bash
+pnpm --filter playground exec playwright install chromium   # once
+pnpm test:e2e
+```
+
 ## Packages
 
 | Package | What it is |

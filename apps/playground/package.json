@@ -7,15 +7,19 @@
     "dev:https": "vite --host --mode https",
     "build": "vue-tsc -p tsconfig.json && vite build",
     "preview": "vite preview --host",
-    "typecheck": "vue-tsc -p tsconfig.json"
+    "typecheck": "vue-tsc -p tsconfig.json",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@pmndrs/uikit": "^1.0.77",
     "@tresjs/core": "^5.9.3",
     "three": "^0.186.1",
     "vue": "^3.5.44",
     "vue-xr-ui": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.20.5",
     "@types/three": "^0.186.0",
     "@types/webxr": "^0.5.24",
     "@vitejs/plugin-basic-ssl": "^2.3.0",

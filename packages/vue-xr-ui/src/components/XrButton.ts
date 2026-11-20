@@ -68,6 +68,13 @@ export const XrButton = defineComponent({
                 // there is no cursor and no physical click.
                 active: { backgroundColor: palette.active, transformTranslateZ: -t.interaction.pressDepth },
               }),
+          // Keep the pointer on the button until release, like DOM pointer
+          // capture. Pressing sinks the button, which can move it out from
+          // under a ray or fingertip for a frame; without capture that frame
+          // reads as leaving the button and the click is lost.
+          onPointerDown: (event: { object?: { setPointerCapture?(id: number): void }; pointerId?: number }) => {
+            if (!props.disabled && event.pointerId != null) event.object?.setPointerCapture?.(event.pointerId)
+          },
           onClick: (event: unknown) => {
             if (!props.disabled) emit('click', event)
           },

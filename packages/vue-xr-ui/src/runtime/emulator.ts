@@ -11,6 +11,12 @@ export interface EmulatorOptions {
   room?: EmulatedRoom | false
   /** Where to inject: only on localhost (default), or always. */
   inject?: 'localhost' | 'always'
+  /**
+   * The emulator's on-screen controls (move the headset, controllers and
+   * hands with the mouse). Turn off for automated tests that drive the
+   * device from code.
+   */
+  devUI?: boolean
 }
 
 /**
@@ -43,7 +49,7 @@ export async function injectEmulator(store: XRStore, options: EmulatorOptions = 
   ])
   const device = new iwer.XRDevice(iwer[options.device ?? 'metaQuest3'])
   device.installRuntime({ forceInstall: true })
-  device.installDevUI(DevUI)
+  if (options.devUI !== false) device.installDevUI(DevUI)
   if (options.room !== false) {
     device.installSEM(SyntheticEnvironmentModule)
     device.sem?.loadDefaultEnvironment(options.room ?? 'living_room')
