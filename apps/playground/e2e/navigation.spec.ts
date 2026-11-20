@@ -63,14 +63,15 @@ test.describe('tabs, list and tooltip in the emulated Quest 3', () => {
     let last = after[1]
     await expect
       .poll(async () => {
-        const y = (await scene.worldCenter('Track 6'))[1]
+        const y = (await scene.worldCenter('Track 6'))[1]!
         const settled = Math.abs(y - last) < 1e-4
         last = y
         return settled
       })
       .toBe(true)
-    await scene.rayClick('right', 'Track 6')
-    await scene.expectText('Playing: Track 6')
+    // Track 4 was half below the fold; after scrolling it is well inside.
+    await scene.rayClick('right', 'Track 4')
+    await scene.expectText('Playing: Track 4')
   })
 
   test('a fingertip taps a tab and a list item', async ({ scene }) => {

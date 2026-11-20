@@ -100,6 +100,32 @@ export default defineComponent({
       return tip.sub(start)
     }
 
+    /**
+     * Aims and waits until the ray is actually on the target (a pointerenter
+     * on it). Right after a session starts, controllers take a few frames to
+     * get their pointers, and a slow machine takes longer.
+     */
+    const aimUntilHovered = async (hand: 'left' | 'right', label: string, fx = 0.5) => {
+      const target = targetFor(label) as unknown as {
+        addEventListener(type: string, l: () => void): void
+        removeEventListener(type: string, l: () => void): void
+      }
+      // Point away first, so that a ray already on the target enters it again.
+      const input = activeInput(hand)
+      input.position.set(0, -10, 0)
+      await frames(2)
+      let hovered = false
+      const onEnter = () => (hovered = true)
+      target.addEventListener('pointerenter', onEnter)
+      try {
+        aim(hand, label, fx)
+        for (let i = 0; i < 60 && !hovered; i++) await frames(1)
+      } finally {
+        target.removeEventListener('pointerenter', onEnter)
+      }
+      if (!hovered) throw new Error(`The ${hand} ray never reached "${label}"`)
+    }
+
     const eventLog: string[] = []
 
     const activeInput = (hand: 'left' | 'right') => {
@@ -192,6 +218,7 @@ export default defineComponent({
         await frames(2)
       },
       aim,
+      aimUntilHovered,
       /** Aims a controller at `fromFx` across a label, holds the trigger, sweeps to `toFx`, releases. */
       async rayDrag(hand: 'left' | 'right', label: string, fromFx: number, toFx: number) {
         const controller = device().controllers[hand]
@@ -256,19 +283,7 @@ export default defineComponent({
       async rayCarry(hand: 'left' | 'right', label: string, delta: [number, number, number]) {
         const controller = device().controllers[hand]
         if (!controller) throw new Error(`No ${hand} controller`)
-        // Right after a session starts, controllers take a few frames to get
-        // their pointers; wait until the ray is actually on the target.
-        const target = targetFor(label) as unknown as {
-          addEventListener(type: string, l: () => void): void
-          removeEventListener(type: string, l: () => void): void
-        }
-        let hovered = false
-        const onEnter = () => (hovered = true)
-        target.addEventListener('pointerenter', onEnter)
-        aim(hand, label)
-        for (let i = 0; i < 60 && !hovered; i++) await frames(1)
-        target.removeEventListener('pointerenter', onEnter)
-        if (!hovered) throw new Error(`The ${hand} ray never reached "${label}"`)
+        await aimUntilHovered(hand, label)
         await frames(2)
         const start = new Vector3(controller.position.x, controller.position.y, controller.position.z)
         controller.updateButtonValue('trigger', 1)

@@ -15,6 +15,7 @@ interface XrTest {
   screenPoint(label: string, fx?: number): { x: number; y: number }
   setInputMode(mode: 'controller' | 'hand'): Promise<void>
   aim(hand: Hand, label: string, fx?: number): void
+  aimUntilHovered(hand: Hand, label: string, fx?: number): Promise<void>
   rayDrag(hand: Hand, label: string, fromFx: number, toFx: number): Promise<void>
   poke(hand: Hand, label: string, fromFx?: number, toFx?: number): Promise<void>
   pinch(hand: Hand): Promise<void>
@@ -166,9 +167,9 @@ export class Scene {
 
   /** Aim a controller ray at a label (at `fx` across it) and pull the trigger (held for `holdMs`). */
   async rayClick(hand: Hand, label: string, { fx = 0.5, holdMs = 0 } = {}) {
-    await this.page.evaluate(([h, l, f]) => window.__xrTest!.aim(h, l, f), [hand, label, fx] as const)
     // Let the ray settle on the target first (hover), then click.
-    await this.page.evaluate(() => window.__xrTest!.frames(3))
+    await this.page.evaluate(([h, l, f]) => window.__xrTest!.aimUntilHovered(h, l, f), [hand, label, fx] as const)
+    await this.page.evaluate(() => window.__xrTest!.frames(2))
     await this.page.evaluate(([h, ms]) => window.__xrTest!.pullTrigger(h, ms), [hand, holdMs] as const)
   }
 }
