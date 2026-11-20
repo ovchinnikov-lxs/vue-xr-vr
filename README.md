@@ -30,8 +30,8 @@ emulated controllers, hands and a synthetic room for MR.
 
 ### On a Quest 3
 
-The playground is deployed to GitHub Pages on every push to `main`:
-open https://ovchinnikov-lxs.github.io/vue-xr-vr/ in the Quest browser and press Enter VR.
+The playground is deployed to Vercel on every push to `main`:
+open https://vue-xr-vr.vercel.app in the Quest browser and press Enter VR.
 
 To try local changes instead:
 
