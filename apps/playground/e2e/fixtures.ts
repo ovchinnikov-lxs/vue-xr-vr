@@ -20,6 +20,7 @@ interface XrTest {
   poke(hand: Hand, label: string, fromFx?: number, toFx?: number): Promise<void>
   pinch(hand: Hand): Promise<void>
   worldCenter(label: string): [number, number, number]
+  inViewAt(label: string, container: string): number
   rayCarry(hand: Hand, label: string, delta: [number, number, number]): Promise<void>
   pinchHold(hand: Hand, label: string): Promise<void>
   moveHandBy(hand: Hand, delta: [number, number, number]): Promise<void>
@@ -106,6 +107,11 @@ export class Scene {
     await this.page.mouse.down()
     await this.page.mouse.move(to.x, to.y, { steps: 8 })
     await this.page.mouse.up()
+  }
+
+  /** A label's position inside a container's visible area: -0.5 bottom edge, 0.5 top edge. */
+  inViewAt(label: string, container: string) {
+    return this.page.evaluate(([l, c]) => window.__xrTest!.inViewAt(l, c), [label, container] as const)
   }
 
   worldCenter(label: string) {

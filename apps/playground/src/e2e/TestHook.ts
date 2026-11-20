@@ -277,6 +277,16 @@ export default defineComponent({
         }
       },
       events: () => [...eventLog],
+      /**
+       * Where a label's centre sits inside a container (a scrolling list's
+       * window), from -0.5 (bottom edge) to 0.5 (top edge); outside that
+       * range it is scrolled out of view.
+       */
+      inViewAt(label: string, container: string) {
+        const c = targetFor(container)
+        c.updateWorldMatrix(true, false)
+        return worldPoint(targetFor(label)).applyMatrix4(c.matrixWorld.clone().invert()).y
+      },
       /** World-space centre of a label's component, as [x, y, z]. */
       worldCenter: (label: string) => worldPoint(targetFor(label)).toArray(),
       /** Holds the trigger on a label and moves the controller by `delta` metres (ray stays parallel). */

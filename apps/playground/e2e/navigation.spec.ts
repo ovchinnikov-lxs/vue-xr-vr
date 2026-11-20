@@ -69,9 +69,15 @@ test.describe('tabs, list and tooltip in the emulated Quest 3', () => {
         return settled
       })
       .toBe(true)
-    // Track 4 was half below the fold; after scrolling it is well inside.
-    await scene.rayClick('right', 'Track 4')
-    await scene.expectText('Playing: Track 4')
+    // How far the list coasts depends on the frame rate; tap a track that
+    // ended up well inside the visible area.
+    let visible: string | undefined
+    for (let i = 1; i <= 12 && !visible; i++) {
+      if (Math.abs(await scene.inViewAt(`Track ${i}`, '#tracks')) < 0.3) visible = `Track ${i}`
+    }
+    expect(visible).toBeDefined()
+    await scene.rayClick('right', visible!)
+    await scene.expectText(`Playing: ${visible}`)
   })
 
   test('a fingertip taps a tab and a list item', async ({ scene }) => {
