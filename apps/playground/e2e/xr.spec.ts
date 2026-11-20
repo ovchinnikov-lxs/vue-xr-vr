@@ -35,4 +35,33 @@ test.describe('in the emulated Quest 3', () => {
     await scene.rayClick('left', 'Increment')
     await scene.expectText('Count: 2')
   })
+
+  test('a slow, held press still clicks', async ({ scene, page }) => {
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+    // People in a headset press deliberately; a long press is still a click.
+    await scene.rayClick('right', 'Increment', 800)
+    await scene.expectText('Count: 1')
+  })
+})
+
+test.describe('with tracked hands', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+    await scene.setInputMode('hand')
+  })
+
+  test('poking a button with a fingertip clicks it', async ({ scene }) => {
+    await scene.poke('right', 'Increment')
+    await scene.expectText('Count: 1')
+    await scene.poke('left', 'Increment')
+    await scene.expectText('Count: 2')
+  })
+
+  test('pinching while pointing clicks a button', async ({ scene }) => {
+    await scene.pinchClick('right', 'Increment')
+    await scene.expectText('Count: 1')
+  })
 })

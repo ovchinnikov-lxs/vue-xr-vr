@@ -5,6 +5,16 @@ import { FRAME_HUB, UIKIT_PARENT } from './context'
 type Properties = Record<string, unknown>
 
 /**
+ * Defaults for every layout root, inherited by its whole tree.
+ *
+ * `pointerEventsType`: UI ignores grab pointers. A tracked hand carries a
+ * grab pointer and a touch pointer on the same fingertip; when both hit a
+ * button at the same distance the grab pointer wins, and a poke never
+ * presses anything. Grabbing is for objects, not for buttons.
+ */
+const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' } }
+
+/**
  * Binds one uikit component to the lifetime of a Vue component.
  *
  * - A layout root (no uikit parent) is rendered through TresJS as
@@ -27,7 +37,7 @@ export function useUikitNode<T extends UikitComponent>(
   const parent = inject(UIKIT_PARENT, undefined)
   const isRoot = parent == null
   const attrs = useAttrs()
-  const getProperties = () => properties({ isRoot })
+  const getProperties = () => (isRoot ? { ...ROOT_DEFAULTS, ...properties({ isRoot }) } : properties({ isRoot }))
   const node = markRaw(create(getProperties()))
 
   // The getter rebuilds the object whenever any reactive input changes.

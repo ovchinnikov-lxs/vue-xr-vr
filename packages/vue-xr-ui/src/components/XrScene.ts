@@ -100,6 +100,14 @@ export const XrScene = defineComponent({
     }
 
     const unsubscribe = store.subscribe((state, prev) => {
+      // @pmndrs/xr builds controllers, hands and their pointers once it knows
+      // the scene origin (on the first XR frame), but only for input sources
+      // that arrive after that. Sources the session reports up front (hands
+      // already tracked at launch) would get no pointers at all. Re-announce
+      // them once the origin is known.
+      if (state.origin && state.origin !== prev.origin && state.inputSourceStates.length > 0) {
+        queueMicrotask(() => store.setState({ inputSourceStates: [...store.getState().inputSourceStates] }))
+      }
       if (state.session && !prev.session) {
         startXrLoop()
         emit('sessionStart', state.session)
