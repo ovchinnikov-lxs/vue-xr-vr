@@ -151,3 +151,67 @@ export function defineTheme(base: ThemeTokens, overrides: DeepPartial<ThemeToken
 }
 
 export type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] }
+
+type Rgb = [number, number, number]
+
+function parseHex(color: string): Rgb {
+  const hex = color.trim().replace(/^#/, '')
+  const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex
+  if (!/^[0-9a-f]{6}$/i.test(full)) throw new Error(`[vue-xr-ui] Expected a hex color like #4f7cff, got "${color}".`)
+  return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)) as Rgb
+}
+
+const toHex = (rgb: Rgb) => '#' + rgb.map((v) => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('')
+
+/** Mixes `color` toward `target` by `amount` (0..1), in sRGB. */
+function mix(color: Rgb, target: Rgb, amount: number): Rgb {
+  return color.map((v, i) => v + (target[i]! - v) * amount) as Rgb
+}
+
+/** WCAG relative luminance. */
+function luminance([r, g, b]: Rgb): number {
+  const channel = (v: number) => {
+    const s = v / 255
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+}
+
+/** WCAG contrast ratio of two hex colors, 1..21. */
+export function contrastRatio(a: string, b: string): number {
+  const [hi, lo] = [luminance(parseHex(a)), luminance(parseHex(b))].sort((x, y) => y - x) as [number, number]
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+const WHITE: Rgb = [255, 255, 255]
+const BLACK: Rgb = [0, 0, 0]
+
+/**
+ * A theme with its accent colour replaced, derived from one hex value:
+ * hover is a little lighter, pressed a little darker, the text on it is
+ * white or near-black, and the focus ring is a
+ * light tint on dark themes.
+ *
+ * ```ts
+ * const theme = withAccent(darkTheme, '#22c55e')
+ * ```
+ */
+export function withAccent(theme: ThemeTokens, accent: string): ThemeTokens {
+  const base = parseHex(accent)
+  const primary = toHex(base)
+  // White unless it falls below 3:1 (the WCAG minimum for large text and UI):
+  // white on a mid blue reads better to most people than its ratio suggests.
+  const onPrimary = contrastRatio(primary, '#ffffff') >= 3 ? '#ffffff' : '#111318'
+  const isDark = luminance(parseHex(theme.colors.text.startsWith('#') ? theme.colors.text : '#ffffff')) > 0.5
+  return {
+    ...theme,
+    colors: {
+      ...theme.colors,
+      primary,
+      primaryHover: toHex(mix(base, WHITE, 0.16)),
+      primaryActive: toHex(mix(base, BLACK, 0.14)),
+      onPrimary,
+      focusRing: isDark ? toHex(mix(base, WHITE, 0.45)) : primary,
+    },
+  }
+}

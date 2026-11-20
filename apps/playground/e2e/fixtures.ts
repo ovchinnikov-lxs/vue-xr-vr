@@ -12,6 +12,8 @@ interface XrTest {
   isShown(label: string): boolean
   state(): { presenting: boolean; mode: string | null; emulator: boolean }
   size(label: string): [number, number] | null
+  inputState(label: string): { value: string; focused: boolean }
+  background(label: string): string
   screenPoint(label: string, fx?: number): { x: number; y: number }
   setInputMode(mode: 'controller' | 'hand'): Promise<void>
   aim(hand: Hand, label: string, fx?: number): void
@@ -68,6 +70,14 @@ export class Scene {
 
   size(label: string) {
     return this.page.evaluate((l) => window.__xrTest!.size(l), label)
+  }
+
+  inputState(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.inputState(l), label)
+  }
+
+  background(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.background(l), label)
   }
 
   recordEvents(label: string) {

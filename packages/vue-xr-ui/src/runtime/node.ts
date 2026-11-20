@@ -1,6 +1,7 @@
 import { Comment, Fragment, Text, h, inject, markRaw, onBeforeUnmount, provide, useAttrs, watch, type Slots, type VNode, type VNodeChild } from 'vue'
 import { Container, type Component as UikitComponent } from '@pmndrs/uikit'
 import { FRAME_HUB, UIKIT_PARENT } from './context'
+import { defaultFontFamilies } from './fonts'
 
 type Properties = Record<string, unknown>
 
@@ -11,8 +12,11 @@ type Properties = Record<string, unknown>
  * grab pointer and a touch pointer on the same fingertip; when both hit a
  * button at the same distance the grab pointer wins, and a poke never
  * presses anything. Grabbing is for objects, not for buttons.
+ *
+ * `fontFamilies`: Inter with Cyrillic (see fonts.ts). A root can still set
+ * its own through its properties.
  */
-const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' } }
+const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' }, fontFamilies: defaultFontFamilies }
 
 /**
  * Binds one uikit component to the lifetime of a Vue component.

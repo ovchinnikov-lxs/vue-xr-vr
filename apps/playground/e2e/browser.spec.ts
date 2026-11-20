@@ -3,7 +3,7 @@ import { expect, test } from './fixtures'
 test.describe('in the browser', () => {
   test('lays out the panel and its text', async ({ scene }) => {
     expect(await scene.texts()).toEqual(
-      expect.arrayContaining(['vue-xr-ui', 'Count: 0', 'In the browser', 'Increment', 'Reset', 'Theme']),
+      expect.arrayContaining(['vue-xr-ui', 'Count: 0', 'In the browser', 'Increment', 'Reset', 'Mode']),
     )
     const [width, height] = (await scene.size('Increment'))!
     // Buttons never go below the theme's 48 dmm minimum target.

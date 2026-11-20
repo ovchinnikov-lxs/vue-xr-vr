@@ -98,6 +98,9 @@ Vue app (DOM)                     <XrEnterButton>, useXr()
 | `<XrTabs>` | Segmented tabs, `v-model`. Switches a value; show the content with `v-if`. |
 | `<XrList>` / `<XrListItem>` | Scrolling list (drag with a ray or finger, mouse wheel); items have label, description, `selected`. A drag never selects. |
 | `<XrTooltip>` | Hint shown while a ray, fingertip or mouse hovers what it wraps. |
+| `<XrTextField>` | Single-line text input, `v-model`, `placeholder`, `type="password"`. Real caret: tap where to type. Physical keyboard works on desktop. Enter emits `submit`. |
+| `<XrKeyboard>` | On-screen keyboard, EN and RU layouts (or your own), Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
+| `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
 
 Every control takes the same input: mouse, controller ray, hand pinch ray and
@@ -108,9 +111,16 @@ Composables: `useXr()` (session state, `enterVR`, `enterAR`, `exit`),
 `useXrFrame(cb)` (per-frame callback that also runs inside the headset),
 `useXrTheme()` (read or switch the theme).
 
+Themes: `darkTheme`, `lightTheme`, `defineTheme(base, overrides)`, and
+`withAccent(theme, '#22c55e')`, which derives hover, pressed, text-on-accent
+(by contrast) and focus colours from one hex value.
+
+Text renders in Inter with Latin and Cyrillic (uikit's bundled fonts are
+Latin only). Each weight loads on first use, about 180 KB.
+
 ## Roadmap
 
-1. Components: keyboard, text input, dialog.
+1. Components: dialog, select, number input.
 2. Follow-the-user panels, billboard, snap to wall/table (MR planes and anchors).
 3. Focus and keyboard navigation, accessibility.
 4. Playground as an in-headset Storybook.

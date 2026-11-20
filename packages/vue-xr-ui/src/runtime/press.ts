@@ -32,6 +32,8 @@ export function usePress(options: {
   onMove?: (event: ControlPointerEvent) => void
   onPress?: (event: ControlPointerEvent) => void
   onRelease?: (event: ControlPointerEvent) => void
+  /** The press ended without a release: it travelled past `cancelAfter`, or the pointer was lost (tracking lost). */
+  onCancel?: () => void
 }) {
   /** Pointers that went down on this control and have not been released, with where they went down. */
   const pressed = new Map<number, Vector3 | undefined>()
@@ -48,6 +50,7 @@ export function usePress(options: {
       const now = surfacePoint(event)
       if (options.cancelAfter != null && start && now && start.distanceTo(now) > options.cancelAfter) {
         pressed.delete(event.pointerId)
+        options.onCancel?.()
         return
       }
       options.onMove?.(event)
@@ -57,6 +60,10 @@ export function usePress(options: {
       pressed.delete(event.pointerId)
       options.onRelease?.(event)
       if (!options.disabled()) options.onPress?.(event)
+    },
+    onPointerCancel(event: ControlPointerEvent) {
+      if (event.pointerId == null || !pressed.delete(event.pointerId)) return
+      options.onCancel?.()
     },
   }
 }

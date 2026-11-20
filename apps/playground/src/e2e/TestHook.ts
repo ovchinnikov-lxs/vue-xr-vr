@@ -1,7 +1,7 @@
 import { defineComponent } from 'vue'
 import { useTres } from '@tresjs/core'
 import { Matrix4, Quaternion, Vector3, type Object3D } from 'three'
-import { Component as UikitComponent, Text } from '@pmndrs/uikit'
+import { Component as UikitComponent, Input, Text } from '@pmndrs/uikit'
 import { useXr, useXrFrame } from 'vue-xr-ui'
 
 /**
@@ -176,7 +176,12 @@ export default defineComponent({
       hasText: (label: string) => findText(label) != null,
       /** Whether a label is laid out and shown: no ancestor has display: none. */
       isShown(label: string) {
-        let node: UikitComponent | undefined = findText(label)
+        let node: UikitComponent | undefined
+        try {
+          node = label.startsWith('#') ? targetFor(label) : findText(label)
+        } catch {
+          return false
+        }
         if (!node) return false
         for (; node; node = node.parentContainer.value) {
           if ((node.properties.value as { display?: string }).display === 'none') return false
@@ -189,6 +194,17 @@ export default defineComponent({
         emulator: xr.store.value?.getState().emulator != null,
       }),
       size: (label: string) => targetFor(label).size.value ?? null,
+      /** The value of the text input inside a component (an <XrTextField>), and whether it has focus. */
+      inputState: (label: string) => {
+        let input: Input | undefined
+        ;(targetFor(label) as unknown as Object3D).traverse((o) => {
+          if (!input && o instanceof Input) input = o as Input
+        })
+        if (!input) throw new Error(`No input in "${label}"`)
+        return { value: input.currentSignal.value, focused: input.hasFocus.value }
+      },
+      /** A component's resolved background colour. */
+      background: (label: string) => String((targetFor(label).properties.value as { backgroundColor?: unknown }).backgroundColor ?? ''),
       /** CSS pixel position of a point on a label's component (see worldPoint) on the 2D canvas. */
       screenPoint(label: string, fx = 0.5) {
         const camera = tres.camera.value

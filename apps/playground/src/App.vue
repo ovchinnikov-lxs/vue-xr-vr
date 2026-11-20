@@ -12,7 +12,7 @@ const emulator = new URLSearchParams(location.search).has('e2e') ? { devUI: fals
 
 <template>
   <TresCanvas clear-color="#0d0f14" window-size>
-    <TresPerspectiveCamera :position="[0, 1.5, 0.1]" :look-at="[0, 1.45, -1]" :fov="60" />
+    <TresPerspectiveCamera :position="[0, 1.5, 0.1]" :look-at="[0, 1.3, -1]" :fov="60" />
     <XrScene :emulator="emulator">
       <HelloPanel />
       <component :is="TestHook" v-if="TestHook" />

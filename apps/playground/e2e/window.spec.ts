@@ -7,10 +7,12 @@ const moved = (a: number[], b: number[]) => b.map((v, i) => v - a[i]!)
 
 test.describe('moving a window', () => {
   test('with the mouse, by its handle', async ({ scene }) => {
-    const before = await scene.screenPoint('#window')
+    // The handle stays under the cursor (the window turns to face the
+    // camera as it moves, so its centre can drift a few pixels).
+    const before = await scene.screenPoint('#window.handle')
     await scene.mouseDragBy('#window.handle', 120, -60)
     await expect.poll(async () => {
-      const after = await scene.screenPoint('#window')
+      const after = await scene.screenPoint('#window.handle')
       return [Math.round(after.x - before.x), Math.round(after.y - before.y)]
     }).toEqual([expect.closeTo(120, -1), expect.closeTo(-60, -1)])
     // Still works where it was put: buttons click.

@@ -22,7 +22,11 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // No GPU on CI runners: render WebGL in software.
-        launchOptions: { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
+        launchOptions: {
+          args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+          // A Chromium installed elsewhere (e.g. a sandbox with its own browser).
+          executablePath: process.env.PW_CHROMIUM_PATH || undefined,
+        },
       },
     },
   ],

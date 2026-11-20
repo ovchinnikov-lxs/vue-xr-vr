@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures'
 
 // Playground: <XrTabs> "Controls" / "List", a 12-track <XrList name="tracks">
-// in the List tab, and an <XrTooltip> "Switch light / dark" on Theme.
+// in the List tab, and an <XrTooltip> "Switch light / dark" on Mode.
 
 test.describe('tabs, list and tooltip in the browser', () => {
   test('tabs switch content, and the content keeps its place', async ({ scene }) => {
@@ -34,7 +34,7 @@ test.describe('tabs, list and tooltip in the browser', () => {
 
   test('the tooltip shows after a hover, and hides on leave', async ({ scene, page }) => {
     expect(await scene.isShown('Switch light / dark')).toBe(false)
-    const theme = await scene.screenPoint('Theme')
+    const theme = await scene.screenPoint('Mode')
     await page.mouse.move(theme.x, theme.y)
     await expect.poll(() => scene.isShown('Switch light / dark')).toBe(true)
     await page.mouse.move(theme.x, theme.y + 200)
@@ -89,7 +89,7 @@ test.describe('tabs, list and tooltip in the emulated Quest 3', () => {
   })
 
   test('the tooltip shows while a ray points at its target', async ({ scene, page }) => {
-    await page.evaluate(() => window.__xrTest!.aim('right', 'Theme'))
+    await page.evaluate(() => window.__xrTest!.aim('right', 'Mode'))
     await expect.poll(() => scene.isShown('Switch light / dark')).toBe(true)
     await page.evaluate(() => window.__xrTest!.aim('right', 'Increment'))
     await expect.poll(() => scene.isShown('Switch light / dark')).toBe(false)
