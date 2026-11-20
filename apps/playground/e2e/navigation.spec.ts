@@ -58,6 +58,17 @@ test.describe('tabs, list and tooltip in the emulated Quest 3', () => {
     expect(after[1] - before[1]).toBeGreaterThan(0.03)
     expect(await scene.isShown('Pick a track')).toBe(true)
 
+    // The list coasts on after a drag; a tap on a moving list only stops it
+    // (as on a phone), so wait until it settles.
+    let last = after[1]
+    await expect
+      .poll(async () => {
+        const y = (await scene.worldCenter('Track 6'))[1]
+        const settled = Math.abs(y - last) < 1e-4
+        last = y
+        return settled
+      })
+      .toBe(true)
     await scene.rayClick('right', 'Track 6')
     await scene.expectText('Playing: Track 6')
   })
