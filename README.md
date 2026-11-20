@@ -95,6 +95,9 @@ Vue app (DOM)                     <XrEnterButton>, useXr()
 | `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`. |
 | `<XrToggle>` | On/off switch with a label, `v-model`. |
 | `<XrSlider>` | Number in a range, `v-model`, `min` / `max` / `step`. Drag with a ray or slide a fingertip along it. |
+| `<XrTabs>` | Segmented tabs, `v-model`. Switches a value; show the content with `v-if`. |
+| `<XrList>` / `<XrListItem>` | Scrolling list (drag with a ray or finger, mouse wheel); items have label, description, `selected`. A drag never selects. |
+| `<XrTooltip>` | Hint shown while a ray, fingertip or mouse hovers what it wraps. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
 
 Every control takes the same input: mouse, controller ray, hand pinch ray and
@@ -107,7 +110,7 @@ Composables: `useXr()` (session state, `enterVR`, `enterAR`, `exit`),
 
 ## Roadmap
 
-1. Components: list, tooltip, tabs, keyboard.
+1. Components: keyboard, text input, dialog.
 2. Follow-the-user panels, billboard, snap to wall/table (MR planes and anchors).
 3. Focus and keyboard navigation, accessibility.
 4. Playground as an in-headset Storybook.

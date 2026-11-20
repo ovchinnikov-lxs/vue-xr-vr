@@ -148,6 +148,15 @@ export default defineComponent({
     ;(window as unknown as { __xrTest: unknown }).__xrTest = {
       texts: () => allTexts().map(textOf),
       hasText: (label: string) => findText(label) != null,
+      /** Whether a label is laid out and shown: no ancestor has display: none. */
+      isShown(label: string) {
+        let node: UikitComponent | undefined = findText(label)
+        if (!node) return false
+        for (; node; node = node.parentContainer.value) {
+          if ((node.properties.value as { display?: string }).display === 'none') return false
+        }
+        return true
+      },
       state: () => ({
         presenting: xr.isPresenting.value,
         mode: xr.mode.value,

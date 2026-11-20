@@ -9,6 +9,7 @@ type Hand = 'left' | 'right'
 interface XrTest {
   texts(): string[]
   hasText(label: string): boolean
+  isShown(label: string): boolean
   state(): { presenting: boolean; mode: string | null; emulator: boolean }
   size(label: string): [number, number] | null
   screenPoint(label: string, fx?: number): { x: number; y: number }
@@ -53,6 +54,10 @@ export class Scene {
 
   texts() {
     return this.page.evaluate(() => window.__xrTest!.texts())
+  }
+
+  isShown(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.isShown(l), label)
   }
 
   state() {

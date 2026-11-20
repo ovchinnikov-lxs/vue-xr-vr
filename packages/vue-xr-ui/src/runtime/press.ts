@@ -22,30 +22,52 @@ export interface ControlPointerEvent {
  */
 export function usePress(options: {
   disabled: () => boolean
+  /**
+   * Cancels the press once the pointer travels this far (metres) from where
+   * it went down: inside a scrolling list, a drag scrolls and must not also
+   * select the item it started on.
+   */
+  cancelAfter?: number
   onDown?: (event: ControlPointerEvent) => void
   onMove?: (event: ControlPointerEvent) => void
   onPress?: (event: ControlPointerEvent) => void
   onRelease?: (event: ControlPointerEvent) => void
 }) {
-  /** Pointers that went down on this control and have not been released. */
-  const pressed = new Set<number>()
+  /** Pointers that went down on this control and have not been released, with where they went down. */
+  const pressed = new Map<number, Vector3 | undefined>()
   return {
     onPointerDown(event: ControlPointerEvent) {
       if (options.disabled() || event.pointerId == null) return
-      pressed.add(event.pointerId)
+      pressed.set(event.pointerId, surfacePoint(event)?.clone())
       event.object?.setPointerCapture?.(event.pointerId)
       options.onDown?.(event)
     },
     onPointerMove(event: ControlPointerEvent) {
       if (event.pointerId == null || !pressed.has(event.pointerId) || options.disabled()) return
+      const start = pressed.get(event.pointerId)
+      const now = surfacePoint(event)
+      if (options.cancelAfter != null && start && now && start.distanceTo(now) > options.cancelAfter) {
+        pressed.delete(event.pointerId)
+        return
+      }
       options.onMove?.(event)
     },
     onPointerUp(event: ControlPointerEvent) {
-      if (event.pointerId == null || !pressed.delete(event.pointerId)) return
+      if (event.pointerId == null || !pressed.has(event.pointerId)) return
+      pressed.delete(event.pointerId)
       options.onRelease?.(event)
       if (!options.disabled()) options.onPress?.(event)
     },
   }
+}
+
+/**
+ * Where a pointer touches the surface it hit. For a fingertip pushing into
+ * a control, `point` follows the finger in depth; travel along the surface
+ * is what tells a tap from a drag.
+ */
+function surfacePoint(event: ControlPointerEvent): Vector3 | undefined {
+  return event.pointOnFace ?? event.point
 }
 
 const inverse = new Matrix4()
