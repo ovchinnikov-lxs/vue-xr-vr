@@ -33,7 +33,7 @@ const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' } }
 export function useUikitNode<T extends UikitComponent>(
   create: (initial: Properties) => T,
   properties: (ctx: { isRoot: boolean }) => Properties,
-): { node: T; isRoot: boolean; render: (children?: VNodeChild) => VNode } {
+): { node: T; isRoot: boolean; render: (children?: VNodeChild, rootAttrs?: Record<string, unknown>) => VNode } {
   const parent = inject(UIKIT_PARENT, undefined)
   const isRoot = parent == null
   const attrs = useAttrs()
@@ -61,8 +61,9 @@ export function useUikitNode<T extends UikitComponent>(
 
   onBeforeUnmount(() => node.dispose())
 
-  const render = (children?: VNodeChild) =>
-    isRoot ? h('primitive', { ...attrs, object: node }, children as never) : h(Fragment, null, children as never)
+  // `rootAttrs` override attrs on the root primitive (a window moved by hand keeps its new place).
+  const render = (children?: VNodeChild, rootAttrs?: Record<string, unknown>) =>
+    isRoot ? h('primitive', { ...attrs, ...rootAttrs, object: node }, children as never) : h(Fragment, null, children as never)
 
   return { node, isRoot, render }
 }

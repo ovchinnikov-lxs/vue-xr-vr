@@ -89,6 +89,7 @@ Vue app (DOM)                     <XrEnterButton>, useXr()
 | --- | --- |
 | `<XrScene>` | Put inside `<TresCanvas>`. Owns the XR session, input and frame loop. |
 | `<XrPanel>` | Floating surface, flex container with theme background. |
+| `<XrWindow>` | A panel with a handle bar: grab it with a ray, a pinch or the mouse to move it; it turns to face you. `v-model:position`. |
 | `<XrBox>` | Transparent flex container (the `<div>`). |
 | `<XrText>` | Text in the theme's type scale. |
 | `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`. |
@@ -107,7 +108,7 @@ Composables: `useXr()` (session state, `enterVR`, `enterAR`, `exit`),
 ## Roadmap
 
 1. Components: list, tooltip, tabs, keyboard.
-2. Grabbable and follow-the-user panels, billboard, snap to wall/table (MR planes and anchors).
+2. Follow-the-user panels, billboard, snap to wall/table (MR planes and anchors).
 3. Focus and keyboard navigation, accessibility.
 4. Playground as an in-headset Storybook.
 5. Demo app (Home Assistant dashboard in MR), docs site, npm release.

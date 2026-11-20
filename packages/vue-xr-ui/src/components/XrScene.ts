@@ -3,7 +3,7 @@ import { useLoop, useTresContext } from '@tresjs/core'
 import { reversePainterSortStable } from '@pmndrs/uikit'
 import { createXRStore, type XRStoreOptions } from '@pmndrs/xr'
 import type { WebGLRenderer } from 'three'
-import { FRAME_HUB, XR_CONTROLLER, type FrameCallback, type FrameHub } from '../runtime/context'
+import { FRAME_HUB, XR_CONTROLLER, XR_VIEW, type FrameCallback, type FrameHub } from '../runtime/context'
 import type { InternalXrController } from '../runtime/controller'
 import { injectAppWide } from '../runtime/app-inject'
 import { injectEmulator, type EmulatorOptions } from '../runtime/emulator'
@@ -68,6 +68,10 @@ export const XrScene = defineComponent({
       },
     }
     provide(FRAME_HUB, hub)
+    provide(XR_VIEW, {
+      headPosition: (target) =>
+        (renderer.xr.isPresenting ? renderer.xr.getCamera() : getCamera()).getWorldPosition(target),
+    })
 
     const tick = (delta: number, frame: XRFrame | undefined) => {
       store.update(frame, delta)

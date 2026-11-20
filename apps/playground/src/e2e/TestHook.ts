@@ -75,6 +75,31 @@ export default defineComponent({
       input.quaternion.set(q.x, q.y, q.z, q.w)
     }
 
+    /**
+     * Puts a hand in its default pose, palm down and pointing ahead, and
+     * returns where its index fingertip sits relative to the hand origin.
+     * Measured 30 cm in front of `near`, clear of the UI, or the fingertip
+     * could press something on the way.
+     */
+    const measureFingertip = async (hand: 'left' | 'right', near: Vector3): Promise<Vector3> => {
+      const handInput = device().hands[hand]
+      if (!handInput) throw new Error(`No ${hand} hand`)
+      handInput.poseId = 'default'
+      handInput.quaternion.set(0, 0, 0, 1)
+      const start = near.clone().add(new Vector3(0, 0, 0.3))
+      handInput.position.set(start.x, start.y, start.z)
+      // Joint poses reach the scene a frame or two later; wait until the tip settles.
+      let tip = fingertipWorld(hand)
+      for (let i = 0; i < 10; i++) {
+        await frames(1)
+        const next = fingertipWorld(hand)
+        const settled = next.distanceTo(tip) < 0.0005
+        tip = next
+        if (settled) break
+      }
+      return tip.sub(start)
+    }
+
     const eventLog: string[] = []
 
     const activeInput = (hand: 'left' | 'right') => {
@@ -183,24 +208,8 @@ export default defineComponent({
       async poke(hand: 'left' | 'right', label: string, fromFx = 0.5, toFx = fromFx) {
         const handInput = device().hands[hand]
         if (!handInput) throw new Error(`No ${hand} hand`)
-        handInput.poseId = 'default'
-        handInput.quaternion.set(0, 0, 0, 1)
         const component = targetFor(label)
-        // Where the fingertip sits relative to the hand origin depends on the
-        // pose, so measure it: move once, read the tip, then correct. Measure
-        // well clear of the UI, or the fingertip may press something on the way.
-        const start = worldPoint(component, fromFx).add(new Vector3(0, 0, 0.3))
-        handInput.position.set(start.x, start.y, start.z)
-        // Joint poses reach the scene a frame or two later; wait until the tip settles.
-        let tip = fingertipWorld(hand)
-        for (let i = 0; i < 10; i++) {
-          await frames(1)
-          const next = fingertipWorld(hand)
-          const settled = next.distanceTo(tip) < 0.0005
-          tip = next
-          if (settled) break
-        }
-        const tipOffset = tip.sub(start)
+        const tipOffset = await measureFingertip(hand, worldPoint(component, fromFx))
         const steps: Array<[number, number]> = [
           ...[0.05, 0.03, 0.01, 0].map((d): [number, number] => [fromFx, d]),
           ...Array.from({ length: 8 }, (_, i): [number, number] => [fromFx + ((toFx - fromFx) * (i + 1)) / 8, -0.005]),
@@ -232,6 +241,73 @@ export default defineComponent({
         }
       },
       events: () => [...eventLog],
+      /** World-space centre of a label's component, as [x, y, z]. */
+      worldCenter: (label: string) => worldPoint(targetFor(label)).toArray(),
+      /** Holds the trigger on a label and moves the controller by `delta` metres (ray stays parallel). */
+      async rayCarry(hand: 'left' | 'right', label: string, delta: [number, number, number]) {
+        const controller = device().controllers[hand]
+        if (!controller) throw new Error(`No ${hand} controller`)
+        // Right after a session starts, controllers take a few frames to get
+        // their pointers; wait until the ray is actually on the target.
+        const target = targetFor(label) as unknown as {
+          addEventListener(type: string, l: () => void): void
+          removeEventListener(type: string, l: () => void): void
+        }
+        let hovered = false
+        const onEnter = () => (hovered = true)
+        target.addEventListener('pointerenter', onEnter)
+        aim(hand, label)
+        for (let i = 0; i < 60 && !hovered; i++) await frames(1)
+        target.removeEventListener('pointerenter', onEnter)
+        if (!hovered) throw new Error(`The ${hand} ray never reached "${label}"`)
+        await frames(2)
+        const start = new Vector3(controller.position.x, controller.position.y, controller.position.z)
+        controller.updateButtonValue('trigger', 1)
+        await frames(2)
+        for (let i = 1; i <= 8; i++) {
+          const p = start.clone().add(new Vector3(...delta).multiplyScalar(i / 8))
+          controller.position.set(p.x, p.y, p.z)
+          await frames(1)
+        }
+        await frames(3)
+        controller.updateButtonValue('trigger', 0)
+        await frames(2)
+      },
+      /**
+       * Pinches with the fingertip 3 cm in front of a label and holds. IWER
+       * reports the pinch (select) a frame before the fingers close, so the
+       * fingertip, and whatever it grabbed, jumps toward the thumb right
+       * after; this waits for that to settle. A real headset reports the
+       * pinch once the fingers have met.
+       */
+      async pinchHold(hand: 'left' | 'right', label: string) {
+        const handInput = device().hands[hand]
+        if (!handInput) throw new Error(`No ${hand} hand`)
+        const target = worldPoint(targetFor(label))
+        const tipOffset = await measureFingertip(hand, target)
+        const start = target.clone().sub(tipOffset).add(new Vector3(0, 0, 0.03))
+        handInput.position.set(start.x, start.y, start.z)
+        await frames(3)
+        handInput.updatePinchValue(1)
+        await frames(4)
+      },
+      /** Moves a hand by `delta` metres over a few frames. */
+      async moveHandBy(hand: 'left' | 'right', delta: [number, number, number]) {
+        const handInput = device().hands[hand]
+        if (!handInput) throw new Error(`No ${hand} hand`)
+        const p0 = handInput.position
+        const start = new Vector3(p0.x, p0.y, p0.z)
+        for (let i = 1; i <= 8; i++) {
+          const p = start.clone().add(new Vector3(...delta).multiplyScalar(i / 8))
+          handInput.position.set(p.x, p.y, p.z)
+          await frames(1)
+        }
+        await frames(3)
+      },
+      async releasePinch(hand: 'left' | 'right') {
+        device().hands[hand]?.updatePinchValue(0)
+        await frames(2)
+      },
       frames,
       frameTime: () => frameTimes.reduce((a, b) => a + b, 0) / Math.max(1, frameTimes.length),
       /** Pulls the trigger: a quick click by default, or held for `holdMs`. */

@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef } from 'vue'
 import type { Mesh } from 'three'
-import { XrBox, XrButton, XrPanel, XrSlider, XrText, XrToggle, darkTheme, lightTheme, useXr, useXrFrame, useXrTheme } from 'vue-xr-ui'
+import { XrBox, XrButton, XrPanel, XrSlider, XrText, XrToggle, XrWindow, darkTheme, lightTheme, useXr, useXrFrame, useXrTheme } from 'vue-xr-ui'
 
 const xr = useXr()
 const theme = useXrTheme()
 const count = ref(0)
 const sound = ref(true)
 const volume = ref(40)
+// v-model keeps where the window was put; save it to restore the layout next time.
+const windowPosition = ref<[number, number, number]>([0, 1.45, -1])
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -32,10 +34,10 @@ useXrFrame((delta) => {
     <TresMeshStandardMaterial color="#4f7cff" />
   </TresMesh>
 
-  <XrPanel :position="[0, 1.45, -1]" :width="440">
+  <XrWindow v-model:position="windowPosition" name="window" :width="440">
     <XrText variant="headline">vue-xr-ui</XrText>
     <XrText muted>
-      Point a controller ray, pinch, or poke the buttons with your finger. Same click event for every input.
+      Point a controller ray, pinch, or poke the buttons with your finger. Same click event for every input. Drag the bar below to move the window.
     </XrText>
 
     <XrPanel variant="sunken" direction="row" align="center" justify="space-between" :padding="4">
@@ -56,5 +58,5 @@ useXrFrame((delta) => {
         <XrText variant="label">{{ sound ? `Volume: ${volume}` : 'Muted' }}</XrText>
       </XrBox>
     </XrPanel>
-  </XrPanel>
+  </XrWindow>
 </template>

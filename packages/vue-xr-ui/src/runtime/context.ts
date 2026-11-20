@@ -2,6 +2,7 @@ import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { Component as UikitComponent } from '@pmndrs/uikit'
 import type { createXRStore } from '@pmndrs/xr'
 import type { ThemeTokens } from '@vue-xr-ui/tokens'
+import type { Vector3 } from 'three'
 
 /** Called every frame, in and out of an XR session. `delta` is in milliseconds. */
 export type FrameCallback = (delta: number, frame: XRFrame | undefined) => void
@@ -30,6 +31,13 @@ export interface XrController {
   exit(): Promise<void>
 }
 
+/** Where the viewer is, provided by <XrScene>. */
+export interface XrView {
+  /** World position of the viewer's head (the XR camera in a session, else the scene camera). */
+  headPosition(target: Vector3): Vector3
+}
+
+export const XR_VIEW: InjectionKey<XrView> = Symbol('vue-xr-ui:view')
 export const XR_CONTROLLER: InjectionKey<XrController> = Symbol('vue-xr-ui:controller')
 export const XR_THEME: InjectionKey<Ref<ThemeTokens>> = Symbol('vue-xr-ui:theme')
 export const FRAME_HUB: InjectionKey<FrameHub> = Symbol('vue-xr-ui:frame-hub')

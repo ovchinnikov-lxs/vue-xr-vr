@@ -17,6 +17,11 @@ interface XrTest {
   rayDrag(hand: Hand, label: string, fromFx: number, toFx: number): Promise<void>
   poke(hand: Hand, label: string, fromFx?: number, toFx?: number): Promise<void>
   pinch(hand: Hand): Promise<void>
+  worldCenter(label: string): [number, number, number]
+  rayCarry(hand: Hand, label: string, delta: [number, number, number]): Promise<void>
+  pinchHold(hand: Hand, label: string): Promise<void>
+  moveHandBy(hand: Hand, delta: [number, number, number]): Promise<void>
+  releasePinch(hand: Hand): Promise<void>
   frames(n: number): Promise<void>
   frameTime(): number
   pullTrigger(hand: Hand, holdMs?: number): Promise<void>
@@ -95,6 +100,38 @@ export class Scene {
     await this.page.mouse.down()
     await this.page.mouse.move(to.x, to.y, { steps: 8 })
     await this.page.mouse.up()
+  }
+
+  worldCenter(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.worldCenter(l), label)
+  }
+
+  /** Presses the mouse on a control and drags it by (dx, dy) CSS pixels. */
+  async mouseDragBy(label: string, dx: number, dy: number) {
+    const from = await this.screenPoint(label)
+    await this.page.mouse.move(from.x, from.y)
+    await this.page.mouse.down()
+    await this.page.mouse.move(from.x + dx, from.y + dy, { steps: 8 })
+    await this.page.waitForTimeout(100)
+    await this.page.mouse.up()
+  }
+
+  /** Grabs a control with a controller ray (trigger) and moves the controller by `delta` metres. */
+  rayCarry(hand: Hand, label: string, delta: [number, number, number]) {
+    return this.page.evaluate(([h, l, d]) => window.__xrTest!.rayCarry(h, l, d), [hand, label, delta] as const)
+  }
+
+  /** Pinches a control with a hand and keeps holding. */
+  pinchHold(hand: Hand, label: string) {
+    return this.page.evaluate(([h, l]) => window.__xrTest!.pinchHold(h, l), [hand, label] as const)
+  }
+
+  moveHandBy(hand: Hand, delta: [number, number, number]) {
+    return this.page.evaluate(([h, d]) => window.__xrTest!.moveHandBy(h, d), [hand, delta] as const)
+  }
+
+  releasePinch(hand: Hand) {
+    return this.page.evaluate((h) => window.__xrTest!.releasePinch(h), hand)
   }
 
   /** Holds a controller trigger at `fromFx` across a control and sweeps the ray to `toFx`. */
