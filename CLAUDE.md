@@ -84,7 +84,7 @@ apps/docs/               VitePress docs site
 .changeset/              pending release notes
 .github/roadmap.yml      the plan; workflows/: ci.yml (check, traceability, e2e, release), roadmap.yml
 journal/                 one file per day: what was done, how, learned, issues, next
-scripts/                 roadmap-sync.mjs, github-release.mjs, traceability.mjs
+scripts/                 roadmap-sync.mjs, github-release.mjs, traceability.mjs, smoke-test.mjs + smoke-app/
 .claude/hooks/           SessionStart (status) and Stop (wrap-up check) hooks
 ```
 
@@ -98,6 +98,7 @@ pnpm typecheck                 # all packages
 pnpm build                     # library dist + types, playground, docs
 pnpm test                      # unit tests (Vitest), pnpm test:coverage for coverage
 pnpm test:e2e                  # Playwright + emulated Quest 3
+pnpm test:smoke                # pack, install in a fresh app, type-check, build, open (CI)
 pnpm changeset                 # add release notes for a change
 ```
 

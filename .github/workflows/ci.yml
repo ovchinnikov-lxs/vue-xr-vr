@@ -60,6 +60,10 @@ jobs:
       - run: pnpm test:e2e
         env:
           CI: true
+      # Installs the packed packages into a fresh app with npm, type-checks,
+      # builds and opens it: catches broken exports, types and missing files.
+      - name: Consumer smoke test
+        run: pnpm test:smoke
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

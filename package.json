@@ -9,7 +9,8 @@
     "typecheck": "pnpm -r typecheck",
     "test:e2e": "pnpm --filter playground test:e2e",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:smoke": "pnpm --filter \"./packages/**\" build && node scripts/smoke-test.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
