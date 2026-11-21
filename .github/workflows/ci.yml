@@ -84,7 +84,9 @@ jobs:
             exit 0
           fi
           pnpm changeset publish
-          git push --tags
+          # GITHUB_TOKEN may not push tags on commits that touch workflows;
+          # github-release.mjs makes the v<version> tag through the API.
+          git push --tags || echo "::warning::Could not push the package tags."
       - name: GitHub Releases for the new tags
         env:
           GH_TOKEN: ${{ github.token }}

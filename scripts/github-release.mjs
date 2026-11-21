@@ -5,8 +5,9 @@
 //
 // Whether a version is released is decided by npm, not by local tags:
 // `changeset publish` creates its tags as annotated tags, which fail without
-// a git identity and only print a warning, so a run could publish to npm and
-// leave no tag behind. This script repairs that on the next run.
+// a git identity, and pushing them with GITHUB_TOKEN can be refused, so a run
+// could publish to npm and leave no tag behind. This script repairs that on
+// the next run.
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 
@@ -26,16 +27,11 @@ if (!ok('npm', ['view', `vue-xr-ui@${version}`, 'version'])) {
   process.exit(0)
 }
 
-// Tag the commit that set this version, not whatever HEAD is now.
+// Tag the commit that set this version, not whatever HEAD is now. The tag is
+// created by the Releases API (--target): a git push of a tag with
+// GITHUB_TOKEN is refused when the tagged commit touches .github/workflows.
 const commit = sh('git', ['log', '-1', '--format=%H', '--', 'packages/vue-xr-ui/package.json'])
-const remoteTags = sh('git', ['ls-remote', '--tags', 'origin'])
 const tag = `v${version}`
-for (const name of [`vue-xr-ui@${version}`, `@vue-xr-ui/tokens@${version}`, tag]) {
-  if (remoteTags.includes(`refs/tags/${name}`)) continue
-  if (!ok('git', ['rev-parse', '-q', '--verify', `refs/tags/${name}`])) sh('git', ['tag', name, commit])
-  sh('git', ['push', 'origin', `refs/tags/${name}`])
-  console.log(`Pushed tag ${name}.`)
-}
 
 if (ok('gh', ['release', 'view', tag])) {
   console.log(`Release ${tag} exists.`)
@@ -54,5 +50,5 @@ if (existsSync(changelog)) {
   }
 }
 notes += `\n\n\`\`\`bash\npnpm add vue-xr-ui@${version}\n\`\`\``
-sh('gh', ['release', 'create', tag, '--title', tag, '--notes', notes, '--verify-tag'])
+sh('gh', ['release', 'create', tag, '--title', tag, '--notes', notes, '--target', commit])
 console.log(`Created release ${tag}.`)
