@@ -78,15 +78,16 @@ try {
   page.on('console', (m) => m.type() === 'error' && !m.location().url.endsWith('/favicon.ico') && errors.push(`${m.text()} (${m.location().url})`))
   page.on('requestfailed', (r) => errors.push(`failed ${r.url()}`))
   const font = page.waitForResponse((r) => /inter-\d00/.test(r.url()) && r.ok(), { timeout: 30_000 })
+  // Wait for the preview server before the page loads, so a refused
+  // connection is not counted as a page error.
   for (let i = 0; ; i++) {
     try {
-      await page.goto(`http://localhost:${port}/`)
-      break
-    } catch (e) {
-      if (i > 40) throw e
-      await new Promise((r) => setTimeout(r, 500))
-    }
+      if ((await fetch(`http://localhost:${port}/`)).ok) break
+    } catch {}
+    if (i > 40) throw new Error(`preview server on port ${port} did not start`)
+    await new Promise((r) => setTimeout(r, 500))
   }
+  await page.goto(`http://localhost:${port}/`)
   await font
   await page.waitForFunction(() => (window.__smoke?.frames ?? 0) > 30 && (window.__smoke?.objects ?? 0) > 5, null, { timeout: 30_000 })
   const button = await page.locator('.xr-enter-button').textContent()
