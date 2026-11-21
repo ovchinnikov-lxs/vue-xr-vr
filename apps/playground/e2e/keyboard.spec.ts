@@ -66,6 +66,8 @@ test.describe('text field and keyboard in the browser', () => {
     expect((await scene.inputState(field)).value).toBe('hello worl')
     await expect.poll(async () => (await scene.inputState(field)).value.length).toBeLessThan(8)
     await page.mouse.up()
+    // The release reaches the scene on its next frame; a slow machine can repeat once more before that.
+    await page.evaluate(() => window.__xrTest!.frames(3))
     const left = (await scene.inputState(field)).value
     await page.waitForTimeout(300)
     expect((await scene.inputState(field)).value).toBe(left)
