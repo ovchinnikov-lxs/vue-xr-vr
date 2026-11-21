@@ -24,7 +24,9 @@ CHANGELOG. Every task should move one of those forward.
 - **Push straight to `main`.** No PRs, no feature branches (unless he asks).
   Claude reviews its own diff before pushing (use the `reviewer` agent for
   anything non-trivial). Aleksandr only tests on the headset.
-- Every push to `main` deploys the playground to https://vue-xr-vr.vercel.app.
+- Every push to `main` deploys the playground to https://vue-xr-vr.vercel.app
+  (Vercel project `vue-xr-vr`) and the docs to https://vue-xr-ui-docs.vercel.app
+  (Vercel project `vue-xr-ui-docs`, root `apps/docs`).
   Things only a headset can show get the `needs-headset` label; tell
   Aleksandr exactly what to check there.
 - Commits: imperative, specific subject (`Add XrDialog`, `E2E: wait for the

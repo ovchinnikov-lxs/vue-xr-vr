@@ -32,3 +32,13 @@ body,
   color: #a3a9b8;
   cursor: not-allowed;
 }
+
+.docs-link {
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: #353945;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}

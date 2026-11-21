@@ -18,7 +18,7 @@
     "url": "git+https://github.com/ovchinnikov-lxs/vue-xr-vr.git",
     "directory": "packages/tokens"
   },
-  "homepage": "https://github.com/ovchinnikov-lxs/vue-xr-vr#readme",
+  "homepage": "https://vue-xr-ui-docs.vercel.app",
   "files": [
     "dist",
     "README.md",

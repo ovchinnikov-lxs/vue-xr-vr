@@ -17,6 +17,8 @@ and poking the button with a fingertip.
 
 > Status: early prototype. API will change.
 
+**Docs: https://vue-xr-ui-docs.vercel.app** · Playground: https://vue-xr-vr.vercel.app
+
 ## Quick start
 
 ```bash
@@ -62,7 +64,7 @@ pnpm test:e2e
 | [`vue-xr-ui`](packages/vue-xr-ui) | Components and composables. |
 | [`@vue-xr-ui/tokens`](packages/tokens) | Framework-agnostic design tokens and themes. |
 | [`playground`](apps/playground) | Demo app and e2e target, deployed to https://vue-xr-vr.vercel.app. |
-| [`docs`](apps/docs) | Documentation site (VitePress): guides, a page and live demo per component, API tables generated from the source. `pnpm --filter docs dev`. |
+| [`docs`](apps/docs) | Documentation site (VitePress), deployed to https://vue-xr-ui-docs.vercel.app: guides, a page and live demo per component, API tables generated from the source. `pnpm --filter docs dev`. |
 
 ## Architecture in one picture
 

@@ -23,6 +23,7 @@ pnpm add vue-xr-ui @tresjs/core three
 One `click` event works for every input: mouse, controller ray, hand pinch,
 and poking the button with a fingertip.
 
+- Docs: https://vue-xr-ui-docs.vercel.app
 - Playground (open it in the Quest browser): https://vue-xr-vr.vercel.app
 - Docs, source and roadmap: https://github.com/ovchinnikov-lxs/vue-xr-vr
 

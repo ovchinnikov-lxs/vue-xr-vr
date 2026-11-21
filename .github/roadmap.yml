@@ -168,6 +168,7 @@ issues:
   - title: "Deploy the docs site (Vercel project, own URL) on every push"
     milestone: "0.3 Docs site"
     labels: [docs, release]
+    state: closed
     body: "A second Vercel project with root `apps/docs`, build `pnpm build`, output `.vitepress/dist`. Link it from the README and the npm package homepage."
   - title: "A live demo on every component page"
     milestone: "0.3 Docs site"
