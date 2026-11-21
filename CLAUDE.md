@@ -47,6 +47,23 @@ CHANGELOG. Every task should move one of those forward.
 - Work the lowest open milestone first unless Aleksandr says otherwise.
 - `/next` (skill `next-task`) picks the next issue and plans it.
 
+## After every task: wrap-up (mandatory)
+
+Aleksandr's rule: after every task, and before a session ends, Claude
+analyses what was done and brings the plan up to date. Run the `wrap-up`
+skill:
+
+1. close the issues the work finished, comment progress on the ones it moved,
+   create issues for everything discovered (and add them to roadmap.yml);
+2. write `journal/YYYY-MM-DD.md`: Done / How / Learned / Issues / Next;
+3. commit `Journal: ...`, push, and tell Aleksandr in Russian what changed.
+
+It is enforced: the **Stop hook** (`.claude/hooks/wrap-up-check.mjs`) blocks
+ending a turn while commits or changes are not covered by the journal; the
+**SessionStart hook** shows the last "Next" and pending commits; the CI
+**traceability** job warns about commits with no `#N` and pushes with no
+journal entry. A pure question with no work needs no wrap-up: say so and stop.
+
 ## Repo map
 
 ```
@@ -65,8 +82,10 @@ apps/docs/               VitePress docs site
   guide/*.md, components/<Name>.md, demos/<demo>.vue (live 3D demos)
   scripts/api.mjs        generates components/api/<Name>.md from the source (props, events, JSDoc)
 .changeset/              pending release notes
-.github/roadmap.yml      the plan; workflows/: ci.yml (check, e2e, release), roadmap.yml
-scripts/                 roadmap-sync.mjs, github-release.mjs
+.github/roadmap.yml      the plan; workflows/: ci.yml (check, traceability, e2e, release), roadmap.yml
+journal/                 one file per day: what was done, how, learned, issues, next
+scripts/                 roadmap-sync.mjs, github-release.mjs, traceability.mjs
+.claude/hooks/           SessionStart (status) and Stop (wrap-up check) hooks
 ```
 
 ## Commands
@@ -132,7 +151,8 @@ A change is done when, in the same push:
    entry, and a README row when it is a component;
 3. user-facing changes have a changeset (`.changeset/*.md`);
 4. the issue is closed by `Closes #N`, and `needs-headset` is added when only
-   the headset can confirm it, with what to check.
+   the headset can confirm it, with what to check;
+5. the wrap-up is done (journal entry, issues synced).
 
 ## Releases
 
@@ -143,8 +163,9 @@ secret), tags and creates the GitHub Release. Details: `/release` skill.
 
 ## Claude tooling in this repo
 
-- Skills (`.claude/skills`, also slash commands): `add-component`,
-  `e2e-emulator`, `release`, `next-task`, `headset-check`, `docs-page`.
+- Skills (`.claude/skills`, also slash commands): `wrap-up` (after every
+  task), `add-component`, `e2e-emulator`, `release`, `next-task`,
+  `headset-check`, `docs-page`.
 - Agents (`.claude/agents`): `reviewer` (self-review before push),
   `e2e-debugger` (flaky / failing emulator tests), `docs-writer`.
 - GitHub from Claude: the GitHub MCP tools (issues, workflow runs, logs).

@@ -20,6 +20,17 @@ jobs:
       # Builds the library (dist + types), the playground and the docs site.
       - run: pnpm build
 
+  traceability:
+    # Every change should be traceable: a commit references an issue (#N)
+    # and the push carries a journal entry (wrap-up skill). Warnings only.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: node scripts/traceability.mjs ${{ github.event.before }} ${{ github.sha }}
+
   e2e:
     # Runs the playground in headless Chromium with an emulated Quest 3 (IWER)
     # and drives it like a user: mouse, Enter VR/AR, controller rays.

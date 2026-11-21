@@ -11,11 +11,24 @@
       "Bash(pnpm exec playwright test*)",
       "Bash(pnpm exec vitepress*)",
       "Bash(node scripts/*)",
+      "Bash(node .claude/hooks/*)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
       "Bash(git add*)",
       "Bash(git commit*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.mjs\"" }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/wrap-up-check.mjs\"" }]
+      }
     ]
   }
 }
