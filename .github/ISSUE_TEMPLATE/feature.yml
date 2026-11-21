@@ -1,0 +1,15 @@
+name: Feature request
+description: A component, an option or a guide you need
+labels: [component]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you want to build, and what is missing?
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: How would you like to use it?
+      description: A snippet of the template you would write.

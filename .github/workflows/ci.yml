@@ -8,6 +8,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Codecov upload without a token (OIDC)
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -19,6 +22,16 @@ jobs:
       - run: pnpm typecheck
       # Builds the library (dist + types), the playground and the docs site.
       - run: pnpm build
+      - name: Unit tests with coverage
+        run: pnpm test:coverage
+      - name: Upload coverage to Codecov
+        if: github.event_name == 'push'
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          files: coverage/lcov.info
+          flags: unit
+          fail_ci_if_error: false
 
   traceability:
     # Every change should be traceable: a commit references an issue (#N)

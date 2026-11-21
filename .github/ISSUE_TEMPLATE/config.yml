@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://vue-xr-ui.vercel.app
+    about: Guides and the API of every component.

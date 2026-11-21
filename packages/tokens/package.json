@@ -18,7 +18,7 @@
     "url": "git+https://github.com/ovchinnikov-lxs/vue-xr-vr.git",
     "directory": "packages/tokens"
   },
-  "homepage": "https://vue-xr-ui-docs.vercel.app",
+  "homepage": "https://vue-xr-ui.vercel.app",
   "files": [
     "dist",
     "README.md",
@@ -35,5 +35,17 @@
     },
     "types": "./dist/index.d.ts",
     "module": "./dist/index.js"
-  }
+  },
+  "author": "Aleksandr Ovchinnikov (https://github.com/ovchinnikov-lxs)",
+  "bugs": {
+    "url": "https://github.com/ovchinnikov-lxs/vue-xr-vr/issues"
+  },
+  "keywords": [
+    "design-tokens",
+    "theme",
+    "webxr",
+    "vr",
+    "xr",
+    "vue-xr-ui"
+  ]
 }

@@ -7,12 +7,16 @@
     "dev": "pnpm --filter playground dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test:e2e": "pnpm --filter playground test:e2e"
+    "test:e2e": "pnpm --filter playground test:e2e",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
+    "@vitest/coverage-v8": "^5.1.1",
     "three": "^0.186.1",
     "typescript": "~5.9.3",
+    "vitest": "^5.1.1",
     "vue-tsc": "^3.1.0",
     "yaml": "^2.9.1"
   },

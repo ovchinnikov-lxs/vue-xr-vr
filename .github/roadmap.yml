@@ -133,6 +133,13 @@ issues:
     body: |
       Done when: `pnpm test` runs Vitest unit tests with v8 coverage for packages/*; CI uploads lcov to Codecov (OIDC, no token) and the README shows the coverage badge. E2E coverage (Playwright + istanbul) is a later step.
 
+  - title: "E2E coverage: collect V8 coverage from the Playwright suite and upload it to Codecov"
+    milestone: "0.2 Components"
+    labels: [testing]
+    body: |
+      Components are tested end to end in the emulated Quest 3, not by unit tests, so the coverage badge only shows unit coverage today.
+      Done when: the e2e job collects JS coverage of packages/vue-xr-ui/src (Playwright `page.coverage` or vite-plugin-istanbul), converts it to lcov and uploads it to Codecov with the `e2e` flag; the README badge shows the combined number.
+
   # ---------------- 0.2 Components ----------------
   - title: "XrDialog: modal panel with focus trap and backdrop"
     milestone: "0.2 Components"

@@ -25,8 +25,8 @@ CHANGELOG. Every task should move one of those forward.
   Claude reviews its own diff before pushing (use the `reviewer` agent for
   anything non-trivial). Aleksandr only tests on the headset.
 - Every push to `main` deploys the playground to https://vue-xr-vr.vercel.app
-  (Vercel project `vue-xr-vr`) and the docs to https://vue-xr-ui-docs.vercel.app
-  (Vercel project `vue-xr-ui-docs`, root `apps/docs`).
+  (Vercel project `vue-xr-vr`) and the docs to https://vue-xr-ui.vercel.app
+  (Vercel project `vue-xr-ui-docs`, domain vue-xr-ui.vercel.app, root `apps/docs`).
   Things only a headset can show get the `needs-headset` label; tell
   Aleksandr exactly what to check there.
 - Commits: imperative, specific subject (`Add XrDialog`, `E2E: wait for the
@@ -96,6 +96,7 @@ pnpm dev                       # playground, http://localhost:5173 (IWER emulato
 pnpm --filter docs dev         # docs site
 pnpm typecheck                 # all packages
 pnpm build                     # library dist + types, playground, docs
+pnpm test                      # unit tests (Vitest), pnpm test:coverage for coverage
 pnpm test:e2e                  # Playwright + emulated Quest 3
 pnpm changeset                 # add release notes for a change
 ```

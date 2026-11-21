@@ -22,6 +22,6 @@ const emulator = new URLSearchParams(location.search).has('e2e') ? { devUI: fals
   <div class="overlay">
     <XrEnterButton mode="vr" />
     <XrEnterButton mode="ar" />
-    <a class="docs-link" href="https://vue-xr-ui-docs.vercel.app" target="_blank" rel="noopener">Docs</a>
+    <a class="docs-link" href="https://vue-xr-ui.vercel.app" target="_blank" rel="noopener">Docs</a>
   </div>
 </template>

@@ -14,8 +14,10 @@
     "ui-kit",
     "components"
   ],
-  "homepage": "https://vue-xr-ui-docs.vercel.app",
-  "bugs": "https://github.com/ovchinnikov-lxs/vue-xr-vr/issues",
+  "homepage": "https://vue-xr-ui.vercel.app",
+  "bugs": {
+    "url": "https://github.com/ovchinnikov-lxs/vue-xr-vr/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ovchinnikov-lxs/vue-xr-vr.git",
@@ -70,5 +72,6 @@
     },
     "types": "./dist/index.d.ts",
     "module": "./dist/index.js"
-  }
+  },
+  "author": "Aleksandr Ovchinnikov (https://github.com/ovchinnikov-lxs)"
 }
