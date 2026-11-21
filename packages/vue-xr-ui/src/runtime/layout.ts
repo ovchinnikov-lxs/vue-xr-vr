@@ -16,7 +16,7 @@ export const layoutProps = {
   grow: Number,
   width: [Number, String] as PropType<Size>,
   height: [Number, String] as PropType<Size>,
-  /** Escape hatch: raw @pmndrs/uikit properties, merged last. */
+  /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
   ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
 } as const
 

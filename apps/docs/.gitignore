@@ -1,0 +1,4 @@
+.vitepress/cache
+.vitepress/dist
+# Generated from the component source by scripts/api.mjs on every build.
+components/api

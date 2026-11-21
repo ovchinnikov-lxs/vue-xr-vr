@@ -10,9 +10,11 @@
     "test:e2e": "pnpm --filter playground test:e2e"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.1",
+    "three": "^0.186.1",
     "typescript": "~5.9.3",
     "vue-tsc": "^3.1.0",
-    "three": "^0.186.1"
+    "yaml": "^2.9.1"
   },
   "pnpm": {
     "overrides": {

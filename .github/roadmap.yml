@@ -1,0 +1,245 @@
+# The plan, as code. `.github/workflows/roadmap.yml` syncs it to GitHub:
+# labels, milestones, issues (and the Project board, when PROJECT_TOKEN is set).
+#
+# Rules
+# - Sync only ADDS: a missing label / milestone / issue is created, an
+#   existing one (matched by title) gets its milestone and labels set. It
+#   never closes, reopens or deletes anything. After an issue exists, GitHub
+#   is its source of truth (close it with "Closes #N" in a commit on main).
+# - `state: closed` creates an issue already closed, for work that is done,
+#   so milestones show real progress.
+# - Add new work here (or straight on GitHub); Claude reads both.
+
+definition_of_done: |
+  vue-xr-ui 1.0 is done when ALL of this is true:
+  1. `vue-xr-ui` and `@vue-xr-ui/tokens` are published on npm (1.0.0), built
+     to dist/ with types, installable in a fresh Vite + Vue app that works
+     following only the docs (checked in CI by a consumer smoke test).
+  2. A docs site is live: guide, a page for every component with a live demo
+     and a generated API table, theming, input, MR and testing guides.
+  3. Every component has e2e tests in the emulated Quest 3 (mouse, ray, hand
+     poke) and was checked on a real Quest 3 (label `needs-headset` cleared).
+  4. MR works: passthrough, panels anchored to real surfaces, persisted.
+  5. A demo app (MR smart-home dashboard) is deployed and recorded on video.
+  6. CHANGELOG, GitHub Releases and semver are in place since 0.1.0.
+
+labels:
+  - { name: component, color: "1d76db", description: "A new or changed UI component" }
+  - { name: input, color: "5319e7", description: "Rays, hands, poke, grab, keyboard focus" }
+  - { name: mr, color: "0e8a16", description: "Mixed reality: passthrough, planes, anchors" }
+  - { name: docs, color: "0075ca", description: "Docs site, guides, README" }
+  - { name: release, color: "d93f0b", description: "Packaging, versioning, npm, CI" }
+  - { name: testing, color: "fbca04", description: "E2E in the emulator, CI" }
+  - { name: demo, color: "c5def5", description: "Demo app" }
+  - { name: dx, color: "bfdadc", description: "Developer experience, repo tooling, Claude setup" }
+  - { name: perf, color: "f9d0c4", description: "Frame time, draw calls, bundle size" }
+  - { name: bug, color: "d73a4a", description: "Something is broken" }
+  - { name: needs-headset, color: "e99695", description: "Done in code; Aleksandr checks it on the Quest 3" }
+  - { name: upstream, color: "ededed", description: "Bug or PR for a dependency (pmndrs, IWER, TresJS)" }
+  - { name: later, color: "ffffff", description: "Not needed for 1.0" }
+
+milestones:
+  - title: "0.1 Foundation"
+    description: "Scene, input, the first controls, themes, keyboard, emulator tests, playground deploy. Released as 0.1.0 on npm."
+  - title: "0.2 Components"
+    description: "The rest of the core kit: dialog, select, number input, checkbox/radio, progress, icons, focus navigation."
+  - title: "0.3 Docs site"
+    description: "A real documentation site, deployed, with live demos and generated API tables for every component."
+  - title: "0.4 Mixed reality"
+    description: "Passthrough, follow/billboard panels, snap to planes, anchors that persist, hand menu."
+  - title: "0.5 Demo app"
+    description: "An MR smart-home dashboard (Home Assistant) built only with the public API, deployed and recorded."
+  - title: "1.0 Release"
+    description: "API review, performance budget, accessibility, 1.0.0 on npm, announcement. See the definition of done in .github/roadmap.yml."
+  - title: "Unity + Meta XR SDK"
+    description: "After 1.0: a small native Quest app with Unity and the Meta XR SDK, to compare with the web stack."
+
+issues:
+  # ---------------- 0.1 Foundation ----------------
+  - title: "Monorepo, first WebXR scene, Quest 3 emulator"
+    milestone: "0.1 Foundation"
+    labels: [dx]
+    state: closed
+  - title: "Input: controller rays, hand pinch and fingertip poke"
+    milestone: "0.1 Foundation"
+    labels: [input]
+    state: closed
+  - title: "XrToggle and XrSlider"
+    milestone: "0.1 Foundation"
+    labels: [component]
+    state: closed
+  - title: "XrWindow: grab and move panels"
+    milestone: "0.1 Foundation"
+    labels: [component, input]
+    state: closed
+  - title: "XrTabs, XrList and XrTooltip"
+    milestone: "0.1 Foundation"
+    labels: [component]
+    state: closed
+  - title: "XrTextField and XrKeyboard with layouts and voice input"
+    milestone: "0.1 Foundation"
+    labels: [component, input]
+    state: closed
+  - title: "Themes: dark, light, withAccent, XrThemeProvider, Cyrillic font"
+    milestone: "0.1 Foundation"
+    labels: [component]
+    state: closed
+  - title: "E2E tests in an emulated Quest 3 on CI"
+    milestone: "0.1 Foundation"
+    labels: [testing]
+    state: closed
+  - title: "Deploy the playground to Vercel on every push"
+    milestone: "0.1 Foundation"
+    labels: [release]
+    state: closed
+  - title: "Repo set up for Claude: CLAUDE.md, agents, skills"
+    milestone: "0.1 Foundation"
+    labels: [dx]
+    state: closed
+  - title: "Library build (dist + types), changesets, release workflow"
+    milestone: "0.1 Foundation"
+    labels: [release]
+    state: closed
+  - title: "Publish 0.1.0 to npm"
+    milestone: "0.1 Foundation"
+    labels: [release]
+    body: |
+      The release workflow publishes as soon as it can authenticate to npm.
+
+      Aleksandr, once:
+      1. On npmjs.com, create the organization `vue-xr-ui` (free, public packages) so the `@vue-xr-ui/tokens` scope exists.
+      2. Create a granular access token: Packages and scopes = Read and write, All packages (or `vue-xr-ui` + `@vue-xr-ui/*`), with "Bypass 2FA" on.
+      3. Add it as the repository secret `NPM_TOKEN` (Settings > Secrets and variables > Actions).
+      4. Re-run the latest CI run on main (or push anything): the `release` job publishes 0.1.0, tags `v0.1.0` and creates the GitHub Release.
+
+      Later: switch to npm trusted publishing (OIDC) and delete the token.
+
+      Done when `npm view vue-xr-ui version` prints 0.1.0.
+  - title: "Consumer smoke test: install the packed tarball in a fresh Vite app on CI"
+    milestone: "0.1 Foundation"
+    labels: [release, testing]
+    body: |
+      `pnpm pack` both packages, create a minimal Vite + Vue + TresJS app in a temp dir, install the tarballs, run `vue-tsc` and `vite build`, and load it in Playwright (panel renders, a click works). Run in CI before the release job, so a broken `exports`, a missing file or a missing dependency never reaches npm.
+
+  # ---------------- 0.2 Components ----------------
+  - title: "XrDialog: modal panel with focus trap and backdrop"
+    milestone: "0.2 Components"
+    labels: [component]
+    body: |
+      A panel that opens in front of the user (at the reading distance, facing them), dims or blocks what is behind, closes on a Close button / Escape / a press outside. `v-model:open`. Slots: title, default, actions.
+  - title: "XrSelect: dropdown with a list of options"
+    milestone: "0.2 Components"
+    labels: [component]
+    body: "`v-model`, options as strings or `{ label, value, description }`, opens a floating XrList above the other content, closes on choice or press outside. Works with rays and poke."
+  - title: "XrNumberInput: stepper with - / + and a field"
+    milestone: "0.2 Components"
+    labels: [component]
+  - title: "XrCheckbox and XrRadioGroup"
+    milestone: "0.2 Components"
+    labels: [component]
+  - title: "XrProgress: bar and spinner"
+    milestone: "0.2 Components"
+    labels: [component]
+  - title: "XrIcon: SVG icons (Lucide) and icon-only buttons"
+    milestone: "0.2 Components"
+    labels: [component]
+  - title: "Focus and keyboard navigation (Tab, arrows, Enter) and a visible focus ring"
+    milestone: "0.2 Components"
+    labels: [input]
+  - title: "JSDoc for every prop and event, so the generated API tables are complete"
+    milestone: "0.2 Components"
+    labels: [docs, component]
+  - title: "Emulator: make iwer an optional dependency of the library"
+    milestone: "0.2 Components"
+    labels: [perf, release]
+    body: "`iwer`, `@iwer/devui` (with React) and `@iwer/sem` are already imported dynamically, but they are regular dependencies: every install pulls them and every app build emits ~10 MB of emulator chunks (rooms, devui). Make them optional peer dependencies (or a separate `vue-xr-ui/emulator` entry) so apps opt in."
+  - title: "Fonts: ship MSDF fonts as binary assets, not 260 KB JS chunks"
+    milestone: "0.2 Components"
+    labels: [perf]
+  - title: "Unit tests (Vitest) for tokens, withAccent, keyboard layouts, press logic"
+    milestone: "0.2 Components"
+    labels: [testing]
+
+  # ---------------- 0.3 Docs site ----------------
+  - title: "Docs site skeleton: VitePress, guides, component pages, live demos, generated API tables"
+    milestone: "0.3 Docs site"
+    labels: [docs]
+    state: closed
+  - title: "Deploy the docs site (Vercel project, own URL) on every push"
+    milestone: "0.3 Docs site"
+    labels: [docs, release]
+    body: "A second Vercel project with root `apps/docs`, build `pnpm build`, output `.vitepress/dist`. Link it from the README and the npm package homepage."
+  - title: "A live demo on every component page"
+    milestone: "0.3 Docs site"
+    labels: [docs]
+  - title: "Guide: mixed reality (passthrough, planes, anchors)"
+    milestone: "0.3 Docs site"
+    labels: [docs, mr]
+  - title: "Guide: performance in the headset (draw calls, text, frame budget)"
+    milestone: "0.3 Docs site"
+    labels: [docs, perf]
+  - title: "Docs: composables and tokens API reference (useXr, useXrFrame, useXrTheme, tokens)"
+    milestone: "0.3 Docs site"
+    labels: [docs]
+  - title: "Docs: check every page on the Quest browser (demos enter VR)"
+    milestone: "0.3 Docs site"
+    labels: [docs, needs-headset]
+
+  # ---------------- 0.4 Mixed reality ----------------
+  - title: "Passthrough session polish: transparent background, AR enter button, room-scale origin"
+    milestone: "0.4 Mixed reality"
+    labels: [mr]
+  - title: "Lazy follow and billboard panels (stay in view, face the user)"
+    milestone: "0.4 Mixed reality"
+    labels: [mr, component]
+  - title: "Snap panels to walls and tables (plane detection)"
+    milestone: "0.4 Mixed reality"
+    labels: [mr]
+  - title: "Anchored panels that persist across sessions (WebXR anchors)"
+    milestone: "0.4 Mixed reality"
+    labels: [mr]
+  - title: "Hand menu: a panel on the wrist when the palm faces you"
+    milestone: "0.4 Mixed reality"
+    labels: [mr, input, component]
+  - title: "E2E: MR flows in the emulator's synthetic room"
+    milestone: "0.4 Mixed reality"
+    labels: [mr, testing]
+
+  # ---------------- 0.5 Demo app ----------------
+  - title: "Demo app scaffold: apps/home-dashboard on the public API only"
+    milestone: "0.5 Demo app"
+    labels: [demo]
+  - title: "Home Assistant connection (WebSocket API, token) with a mock mode"
+    milestone: "0.5 Demo app"
+    labels: [demo]
+  - title: "Dashboard panels: lights, climate, media, anchored to rooms"
+    milestone: "0.5 Demo app"
+    labels: [demo, mr]
+  - title: "Deploy the demo and record a headset video"
+    milestone: "0.5 Demo app"
+    labels: [demo, needs-headset]
+
+  # ---------------- 1.0 Release ----------------
+  - title: "API review: names, props, events consistent across components"
+    milestone: "1.0 Release"
+    labels: [component]
+  - title: "Performance budget: 72+ fps on Quest 3 with the demo app, measured"
+    milestone: "1.0 Release"
+    labels: [perf, needs-headset]
+  - title: "Accessibility: focus order, labels, reduced motion, readable contrast"
+    milestone: "1.0 Release"
+    labels: [input]
+  - title: "Switch npm publishing to trusted publishing (OIDC), no token"
+    milestone: "1.0 Release"
+    labels: [release]
+  - title: "Upstream: IWER forceInstall in @pmndrs/xr emulator, inputSourceStates re-announce"
+    milestone: "1.0 Release"
+    labels: [upstream]
+  - title: "Release 1.0.0 and announce (README, docs, video)"
+    milestone: "1.0 Release"
+    labels: [release, docs]
+
+  # ---------------- After 1.0 ----------------
+  - title: "Unity + Meta XR SDK: small Quest app with the same UI ideas"
+    milestone: "Unity + Meta XR SDK"
+    labels: [later]

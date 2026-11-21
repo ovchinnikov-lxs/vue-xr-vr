@@ -1,0 +1,39 @@
+name: Roadmap
+
+# Syncs .github/roadmap.yml to labels, milestones, issues and the Project
+# board. Additive only: it never closes, reopens or deletes anything.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/roadmap.yml', 'scripts/roadmap-sync.mjs']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only print what would change'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency: roadmap
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/roadmap-sync.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          # A token with the `project` scope; without it the board is skipped.
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}

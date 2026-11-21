@@ -1,6 +1,6 @@
 {
   "name": "@vue-xr-ui/tokens",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Design tokens and themes for vue-xr-ui (framework-agnostic).",
   "type": "module",
   "license": "MIT",
@@ -9,6 +9,31 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepack": "pnpm build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ovchinnikov-lxs/vue-xr-vr.git",
+    "directory": "packages/tokens"
+  },
+  "homepage": "https://github.com/ovchinnikov-lxs/vue-xr-vr#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    },
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js"
   }
 }

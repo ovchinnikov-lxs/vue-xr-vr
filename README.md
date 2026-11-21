@@ -61,7 +61,8 @@ pnpm test:e2e
 | --- | --- |
 | [`vue-xr-ui`](packages/vue-xr-ui) | Components and composables. |
 | [`@vue-xr-ui/tokens`](packages/tokens) | Framework-agnostic design tokens and themes. |
-| [`playground`](apps/playground) | Demo app, the first scene. |
+| [`playground`](apps/playground) | Demo app and e2e target, deployed to https://vue-xr-vr.vercel.app. |
+| [`docs`](apps/docs) | Documentation site (VitePress): guides, a page and live demo per component, API tables generated from the source. `pnpm --filter docs dev`. |
 
 ## Architecture in one picture
 
@@ -126,11 +127,27 @@ Latin only). Each weight loads on first use, about 250 KB.
 
 ## Roadmap
 
-1. Components: dialog, select, number input.
-2. Follow-the-user panels, billboard, snap to wall/table (MR planes and anchors).
-3. Focus and keyboard navigation, accessibility.
-4. Playground as an in-headset Storybook.
-5. Demo app (Home Assistant dashboard in MR), docs site, npm release.
+The plan lives in [`.github/roadmap.yml`](.github/roadmap.yml) (definition of
+done for 1.0, milestones, issues) and is synced to
+[milestones](https://github.com/ovchinnikov-lxs/vue-xr-vr/milestones) and
+issues on GitHub:
+
+0.1 Foundation → 0.2 Components → 0.3 Docs site → 0.4 Mixed reality →
+0.5 Demo app → 1.0 Release.
+
+## Releases
+
+[Changesets](https://github.com/changesets/changesets) and semver. Each
+user-facing change adds a `.changeset/*.md`; a release runs
+`pnpm changeset version` and pushes, and CI publishes to npm, tags and
+creates a GitHub Release. See [CHANGELOG](packages/vue-xr-ui/CHANGELOG.md).
+
+## Contributing (and Claude Code)
+
+[`CLAUDE.md`](CLAUDE.md) has the conventions, the definition of done for a
+change, and the gotchas; `.claude/` has skills (`add-component`,
+`e2e-emulator`, `release`, `next-task`, `headset-check`, `docs-page`) and
+agents (`reviewer`, `e2e-debugger`, `docs-writer`).
 
 ## License
 

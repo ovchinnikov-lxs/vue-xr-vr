@@ -17,6 +17,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # Builds the library (dist + types), the playground and the docs site.
       - run: pnpm build
 
   e2e:
@@ -44,3 +45,42 @@ jobs:
             apps/playground/playwright-report
             apps/playground/test-results
           retention-days: 7
+
+  release:
+    # Publishes to npm every package whose version in package.json is not on
+    # npm yet, tags it (v0.1.0) and creates a GitHub Release from the
+    # CHANGELOG. Versions are bumped by `pnpm changeset version` in a commit on
+    # main (see .claude/skills/release). Does nothing when nothing is new.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check, e2e]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # tags and GitHub Releases
+      id-token: write   # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - name: Publish new versions to npm
+        id: publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::warning::NPM_TOKEN is not set, nothing is published. See the issue 'Publish 0.1.0 to npm'."
+            exit 0
+          fi
+          pnpm changeset publish
+          git push --tags
+      - name: GitHub Releases for the new tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/github-release.mjs

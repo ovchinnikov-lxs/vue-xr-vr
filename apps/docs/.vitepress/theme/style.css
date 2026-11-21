@@ -1,0 +1,23 @@
+.live-demo {
+  position: relative;
+  margin: 16px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  background: #0d0f14;
+}
+.live-demo__enter {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+.live-demo__enter button {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: var(--vp-c-brand-1);
+  color: white;
+  font-weight: 600;
+}
+.live-demo__enter button:disabled {
+  display: none;
+}
