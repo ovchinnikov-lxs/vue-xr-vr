@@ -97,7 +97,7 @@ pnpm --filter docs dev         # docs site
 pnpm typecheck                 # all packages
 pnpm build                     # library dist + types, playground, docs
 pnpm test                      # unit tests (Vitest), pnpm test:coverage for coverage
-pnpm test:e2e                  # Playwright + emulated Quest 3
+pnpm test:e2e                  # Playwright + emulated Quest 3 (E2E_COVERAGE=1: lcov in coverage-e2e/)
 pnpm test:smoke                # pack, install in a fresh app, type-check, build, open (CI)
 pnpm changeset                 # add release notes for a change
 ```

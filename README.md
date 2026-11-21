@@ -186,8 +186,9 @@ Try local changes on a Quest: `pnpm --filter playground dev:https`, then open
 certificate warning.
 
 Coverage: unit tests cover tokens and pure logic; components are covered by
-the end-to-end suite in the emulated headset (e2e coverage in Codecov is
-[planned](https://github.com/ovchinnikov-lxs/vue-xr-vr/issues/52)).
+the end-to-end suite in the emulated headset. CI uploads both to Codecov
+(flags `unit` and `e2e`) and the badge shows them combined. Locally:
+`E2E_COVERAGE=1 pnpm test:e2e` writes `coverage-e2e/lcov.info`.
 
 ## Architecture in one picture
 

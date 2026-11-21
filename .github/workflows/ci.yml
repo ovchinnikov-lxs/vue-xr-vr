@@ -60,6 +60,15 @@ jobs:
       - run: pnpm test:e2e
         env:
           CI: true
+          E2E_COVERAGE: 1   # V8 coverage of packages/vue-xr-ui/src (e2e/coverage.ts)
+      - name: Upload e2e coverage to Codecov
+        if: github.event_name == 'push'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage-e2e/lcov.info
+          flags: e2e
+          fail_ci_if_error: false
       # Installs the packed packages into a fresh app with npm, type-checks,
       # builds and opens it: catches broken exports, types and missing files.
       - name: Consumer smoke test

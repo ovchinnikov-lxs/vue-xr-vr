@@ -1,5 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { test as base, expect, type Page } from '@playwright/test'
+import { CoverageReport } from 'monocart-coverage-reports'
+import { coverageEnabled, coverageOptions } from './coverage'
 
 const PROFILES_CDN = 'https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles/'
 const PROFILES_DIR = fileURLToPath(new URL('./assets/webxr-input-profiles/', import.meta.url))
@@ -235,10 +237,12 @@ export const test = base.extend<{ scene: Scene }>({
       }
       ;(window as unknown as { SpeechRecognition: unknown }).SpeechRecognition = FakeSpeechRecognition
     })
+    if (coverageEnabled) await page.coverage.startJSCoverage({ resetOnNavigation: false })
     await page.goto('/?e2e')
     const scene = new Scene(page)
     await scene.ready()
     await use(scene)
+    if (coverageEnabled) await new CoverageReport(coverageOptions).add(await page.coverage.stopJSCoverage())
     expect(errors, 'uncaught errors in the page').toEqual([])
   },
 })
