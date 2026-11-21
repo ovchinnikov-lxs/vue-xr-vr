@@ -121,6 +121,18 @@ issues:
     body: |
       `pnpm pack` both packages, create a minimal Vite + Vue + TresJS app in a temp dir, install the tarballs, run `vue-tsc` and `vite build`, and load it in Playwright (panel renders, a click works). Run in CI before the release job, so a broken `exports`, a missing file or a missing dependency never reaches npm.
 
+  - title: "Open-source README and npm page: badges, links, screenshots, contributing"
+    milestone: "0.1 Foundation"
+    labels: [docs, release]
+    body: |
+      The repo README and the npm package page should look like a real open-source library.
+      Done when: badges (npm version, downloads, CI, coverage, bundle size, license, docs); links to npm, docs, playground, changelog; install + quick start; screenshots of the playground in VR; feature list; browser/device support; CONTRIBUTING.md and issue templates; package.json has repository, homepage, bugs, keywords, author so npm shows the links; the npm README uses absolute URLs.
+  - title: "Test coverage: Vitest unit tests with coverage, uploaded to Codecov, badge in README"
+    milestone: "0.1 Foundation"
+    labels: [testing]
+    body: |
+      Done when: `pnpm test` runs Vitest unit tests with v8 coverage for packages/*; CI uploads lcov to Codecov (OIDC, no token) and the README shows the coverage badge. E2E coverage (Playwright + istanbul) is a later step.
+
   # ---------------- 0.2 Components ----------------
   - title: "XrDialog: modal panel with focus trap and backdrop"
     milestone: "0.2 Components"
