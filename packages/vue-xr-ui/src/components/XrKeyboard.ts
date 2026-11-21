@@ -1,10 +1,11 @@
 import { computed, defineComponent, h, onBeforeUnmount, ref, type PropType } from 'vue'
-import { Container } from '@pmndrs/uikit'
+import { Container, Svg } from '@pmndrs/uikit'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
 import { useUikitNode } from '../runtime/node'
 import { usePress } from '../runtime/press'
 import { activeTextTarget } from '../runtime/text-target'
+import { webSpeechRecognizer, type XrSpeechHandle, type XrSpeechRecognizer } from '../runtime/speech'
 import { XrText } from './XrText'
 
 /**
@@ -23,7 +24,7 @@ export interface XrKeyboardLayout {
   label: string
   /** Full name shown on the space bar, e.g. "English". */
   name?: string
-  /** BCP 47 locale for upper case (Turkish i → İ). */
+  /** BCP 47 locale: upper case (Turkish i → İ) and the voice input language. */
   locale?: string
   /** Rows of keys, top to bottom, one character per key. Shift and Backspace go around the last row. */
   rows: string[]
@@ -32,12 +33,12 @@ export interface XrKeyboardLayout {
 }
 
 export const keyboardLayouts = {
-  en: { label: 'EN', name: 'English', locale: 'en', rows: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] },
-  ru: { label: 'RU', name: 'Русский', locale: 'ru', rows: ['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбюё'] },
-  uk: { label: 'UK', name: 'Українська', locale: 'uk', rows: ['йцукенгшщзхї', 'фівапролджє', 'ячсмитьбюґ'] },
-  de: { label: 'DE', name: 'Deutsch', locale: 'de', rows: ['qwertzuiopü', 'asdfghjklöä', 'yxcvbnmß'] },
-  fr: { label: 'FR', name: 'Français', locale: 'fr', rows: ['azertyuiop', 'qsdfghjklm', 'wxcvbnéèàç'] },
-  es: { label: 'ES', name: 'Español', locale: 'es', rows: ['qwertyuiop', 'asdfghjklñ', 'zxcvbnmáéó'] },
+  en: { label: 'EN', name: 'English', locale: 'en-US', rows: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] },
+  ru: { label: 'RU', name: 'Русский', locale: 'ru-RU', rows: ['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбюё'] },
+  uk: { label: 'UK', name: 'Українська', locale: 'uk-UA', rows: ['йцукенгшщзхї', 'фівапролджє', 'ячсмитьбюґ'] },
+  de: { label: 'DE', name: 'Deutsch', locale: 'de-DE', rows: ['qwertzuiopü', 'asdfghjklöä', 'yxcvbnmß'] },
+  fr: { label: 'FR', name: 'Français', locale: 'fr-FR', rows: ['azertyuiop', 'qsdfghjklm', 'wxcvbnéèàç'] },
+  es: { label: 'ES', name: 'Español', locale: 'es-ES', rows: ['qwertyuiop', 'asdfghjklñ', 'zxcvbnmáéó'] },
 } satisfies Record<string, XrKeyboardLayout>
 
 export type XrKeyboardLayoutName = keyof typeof keyboardLayouts
@@ -51,7 +52,7 @@ export type XrKeyboardKey = string | 'Backspace' | 'Enter'
 type Shift = 'off' | 'once' | 'lock'
 type Key =
   | { kind: 'char'; char: string; width: number }
-  | { kind: 'shift' | 'backspace' | 'enter' | 'layout' | 'symbols' | 'space'; width: number }
+  | { kind: 'shift' | 'backspace' | 'enter' | 'layout' | 'symbols' | 'voice' | 'space'; width: number }
 
 /** Two Shift taps closer than this lock capitals on. */
 const DOUBLE_TAP_MS = 400
@@ -99,6 +100,13 @@ export const XrKeyboard = defineComponent({
     keySize: Number,
     /** Label of the Enter key, e.g. "Send" or "Go". */
     enterLabel: { type: String, default: '↵' },
+    /**
+     * A microphone key for voice input in the active layout's language.
+     * `true`: the browser's Web Speech API (the key is hidden where there is
+     * none). Pass a recognizer for your own speech to text, e.g.
+     * `recordingRecognizer(transcribe)`. `false` hides the key.
+     */
+    voice: { type: [Boolean, Object] as PropType<boolean | XrSpeechRecognizer>, default: true },
     /** Only for a root keyboard: reading distance in metres. */
     distance: Number,
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
@@ -108,6 +116,8 @@ export const XrKeyboard = defineComponent({
     'update:layout': (_index: number) => true,
     key: (_key: XrKeyboardKey) => true,
     enter: () => true,
+    /** Voice input failed, e.g. "not-allowed" (no microphone permission) or "network". */
+    voiceError: (_error: string) => true,
   },
   setup(props, { emit }) {
     const theme = useXrTheme()
@@ -115,6 +125,20 @@ export const XrKeyboard = defineComponent({
     let lastShiftTap = 0
     const localLayout = ref(0)
     const page = ref<'letters' | 'symbols'>('letters')
+
+    // Voice input.
+    const browserSpeech = webSpeechRecognizer()
+    const recognizer = computed(() => (props.voice === true ? browserSpeech : props.voice || undefined))
+    const listening = ref(false)
+    const heard = ref('')
+    const voiceError = ref<string>()
+    let speech: XrSpeechHandle | undefined
+    let errorTimer: ReturnType<typeof setTimeout> | undefined
+    const stopListening = () => speech?.stop()
+    onBeforeUnmount(() => {
+      stopListening()
+      clearTimeout(errorTimer)
+    })
 
     const layouts = computed<XrKeyboardLayout[]>(() => {
       const list = props.layouts.map((l) => {
@@ -139,7 +163,9 @@ export const XrKeyboard = defineComponent({
      */
     const columns = computed(() => {
       const pages = [...layouts.value.map(letterRows), ...(props.symbols ? [symbolPage()] : [])]
-      return Math.max(10, ...pages.flatMap((rows) => [...rows.map(length), length(rows.at(-1)!) + 3]))
+      // The bottom row's fixed keys need room for a space bar of at least 4.
+      const bottom = (layouts.value.length > 1 ? 1.5 : 0) + (props.symbols ? 1.5 : 0) + (recognizer.value ? 1 : 0) + 4 + 4
+      return Math.max(10, bottom, ...pages.flatMap((rows) => [...rows.map(length), length(rows.at(-1)!) + 3]))
     })
 
     const rows = computed<Key[][]>(() => {
@@ -151,6 +177,7 @@ export const XrKeyboard = defineComponent({
       const bottom: Key[] = [
         ...(layouts.value.length > 1 ? [{ kind: 'layout', width: 1.5 } as Key] : []),
         ...(props.symbols ? [{ kind: 'symbols', width: 1.5 } as Key] : []),
+        ...(recognizer.value ? [{ kind: 'voice', width: 1 } as Key] : []),
         { kind: 'char', char: left, width: 1 },
         { kind: 'space', width: 0 },
         { kind: 'char', char: right, width: 1 },
@@ -183,6 +210,42 @@ export const XrKeyboard = defineComponent({
       if (key === 'Enter') emit('enter')
     }
 
+    /** Types recognised speech, with a space before it unless at the start or after one. */
+    const typeSpeech = (text: string) => {
+      const words = text.trim()
+      if (!words) return
+      const before = props.modelValue ?? activeTextTarget.value?.textBeforeCaret() ?? ''
+      send(before === '' || /\s$/.test(before) ? words : ` ${words}`)
+    }
+
+    const toggleVoice = () => {
+      if (speech) return stopListening()
+      const voice = recognizer.value
+      if (!voice) return
+      voiceError.value = undefined
+      clearTimeout(errorTimer)
+      listening.value = true
+      heard.value = ''
+      speech = voice.start({
+        lang: layout.value.locale ?? navigator.language,
+        onPartial: (text) => (heard.value = text),
+        onResult: (text) => {
+          heard.value = ''
+          typeSpeech(text)
+        },
+        onError: (error) => {
+          voiceError.value = error
+          emit('voiceError', error)
+          errorTimer = setTimeout(() => (voiceError.value = undefined), 3000)
+        },
+        onEnd: () => {
+          speech = undefined
+          listening.value = false
+          heard.value = ''
+        },
+      })
+    }
+
     const press = (key: Key) => {
       switch (key.kind) {
         case 'char': {
@@ -207,6 +270,7 @@ export const XrKeyboard = defineComponent({
           break
         }
         case 'layout': {
+          stopListening()
           const next = (layoutIndex.value + 1) % layouts.value.length
           localLayout.value = next
           page.value = 'letters'
@@ -215,6 +279,9 @@ export const XrKeyboard = defineComponent({
         }
         case 'symbols':
           page.value = page.value === 'letters' ? 'symbols' : 'letters'
+          break
+        case 'voice':
+          toggleVoice()
           break
       }
     }
@@ -256,7 +323,11 @@ export const XrKeyboard = defineComponent({
           return layout.value.label
         case 'symbols':
           return page.value === 'letters' ? '?123' : 'ABC'
+        case 'voice':
+          return ''
         case 'space':
+          if (voiceError.value) return voiceErrorText(voiceError.value)
+          if (listening.value) return heard.value || 'Listening…'
           return props.spaceLabel ? (layout.value.name ?? '') : ''
       }
     }
@@ -279,7 +350,10 @@ export const XrKeyboard = defineComponent({
                   width: key.width * unit + (key.width - 1) * gap,
                   height: unit,
                   tone: key.kind === 'char' ? 'char' : key.kind === 'space' ? 'space' : key.kind === 'enter' ? 'accent' : 'action',
-                  active: key.kind === 'shift' && shift.value !== 'off' && page.value === 'letters',
+                  active:
+                    (key.kind === 'shift' && shift.value !== 'off' && page.value === 'letters') ||
+                    (key.kind === 'voice' && listening.value),
+                  icon: key.kind === 'voice' ? MIC_ICON : undefined,
                   repeat: key.kind === 'backspace',
                   onPress: () => press(key),
                   onRepeat: () => send('Backspace'),
@@ -326,6 +400,8 @@ const XrKey = defineComponent({
     height: { type: Number, required: true },
     tone: { type: String as PropType<'char' | 'space' | 'action' | 'accent'>, required: true },
     active: Boolean,
+    /** SVG markup drawn instead of the label, tinted with the key's text colour. */
+    icon: String,
     /** Fires `onRepeat` on down and keeps firing while held, instead of `onPress` on release. */
     repeat: Boolean,
     onPress: { type: Function as PropType<() => void>, required: true },
@@ -385,9 +461,34 @@ const XrKey = defineComponent({
     )
     return () =>
       render(
-        props.label
+        props.icon
+          ? [h(XrKeyIcon, { content: props.icon, size: Math.round(props.height * 0.45) })]
+          : props.label
           ? [h(XrText, props.tone === 'space' ? { variant: 'caption', muted: true, text: props.label } : { variant: 'label', text: props.label })]
           : [],
       )
   },
 })
+
+const XrKeyIcon = defineComponent({
+  name: 'XrKeyIcon',
+  props: { content: { type: String, required: true }, size: { type: Number, required: true } },
+  setup(props) {
+    const { render } = useUikitNode(
+      (initial) => new Svg(initial),
+      () => ({ content: props.content, width: props.size, height: props.size, pointerEvents: 'none' }),
+    )
+    return () => render()
+  },
+})
+
+const MIC_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#fff" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>'
+
+/** A short message on the space bar for a voice input error. */
+function voiceErrorText(error: string): string {
+  if (error === 'not-allowed' || error === 'NotAllowedError' || error === 'service-not-allowed') return 'Microphone not allowed'
+  if (error === 'network') return 'Voice input needs a network'
+  if (error === 'audio-capture' || error === 'NotFoundError') return 'No microphone'
+  return 'Voice input failed'
+}

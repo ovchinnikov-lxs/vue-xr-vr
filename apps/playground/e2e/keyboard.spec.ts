@@ -86,6 +86,41 @@ test.describe('text field and keyboard in the browser', () => {
   })
 })
 
+test.describe('voice input', () => {
+  test.beforeEach(async ({ scene }) => {
+    await scene.click('Type')
+    await expect.poll(() => scene.isShown('#key-voice')).toBe(true)
+  })
+
+  test('the mic key dictates in the layout language, after a space', async ({ scene, page }) => {
+    await scene.click(field)
+    await scene.click('#key-h')
+    await scene.click('#key-i')
+    await scene.click('RU')
+    await expect.poll(() => scene.isShown('#key-д')).toBe(true)
+    const idle = await scene.background('#key-voice')
+
+    await scene.click('#key-voice')
+    await scene.expectText('привет')
+    expect(await scene.background('#key-voice')).not.toBe(idle)
+    expect(await page.evaluate(() => (window as unknown as { __fakeSpeech: { lang: string } }).__fakeSpeech.lang)).toBe('ru-RU')
+
+    await scene.click('#key-voice')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('hi привет мир')
+    await page.mouse.move(5, 5) // off the key, so it is not drawn hovered
+    await expect.poll(() => scene.background('#key-voice')).toBe(idle)
+    await scene.expectText('Русский')
+  })
+
+  test('a voice error shows on the space bar', async ({ scene, page }) => {
+    await page.evaluate(() => ((window as unknown as { __fakeSpeech: { fail: string } }).__fakeSpeech.fail = 'not-allowed'))
+    await scene.click(field)
+    await scene.click('#key-voice')
+    await scene.expectText('Microphone not allowed')
+    expect((await scene.inputState(field)).value).toBe('')
+  })
+})
+
 test.describe('themes', () => {
   test('an accent recolours the app, but not the card with its own theme', async ({ scene }) => {
     await scene.click('Theme')
@@ -118,6 +153,14 @@ test.describe('keyboard in the emulated Quest 3', () => {
     await expect.poll(async () => (await scene.inputState(field)).value).toBe('ok')
     await scene.rayClick('left', '#key-enter')
     await scene.expectText('ok')
+  })
+
+  test('a ray presses the mic key', async ({ scene }) => {
+    await scene.rayClick('right', field)
+    await scene.rayClick('right', '#key-voice')
+    await scene.expectText('привет')
+    await scene.rayClick('right', '#key-voice')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('привет мир')
   })
 
   test('fingertips type on the keyboard', async ({ scene }) => {

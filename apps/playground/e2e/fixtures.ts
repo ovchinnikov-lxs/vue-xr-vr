@@ -202,6 +202,38 @@ export const test = base.extend<{ scene: Scene }>({
         return route.fulfill({ status: 404 })
       })
     })
+    // A stand-in for the Web Speech API (the real one needs Google's servers):
+    // on start it hears "привет", on stop it settles on "привет мир".
+    // `window.__fakeSpeech.fail` makes it fail with that error instead.
+    await page.addInitScript(() => {
+      const control = ((window as unknown as { __fakeSpeech: { fail?: string; lang?: string } }).__fakeSpeech = {})
+      class FakeSpeechRecognition {
+        lang = ''
+        interimResults = false
+        continuous = false
+        onresult: ((e: unknown) => void) | null = null
+        onerror: ((e: unknown) => void) | null = null
+        onend: (() => void) | null = null
+        start() {
+          control.lang = this.lang
+          setTimeout(() => {
+            if (control.fail) {
+              this.onerror?.({ error: control.fail })
+              this.onend?.()
+              return
+            }
+            this.onresult?.({ resultIndex: 0, results: [{ isFinal: false, 0: { transcript: 'привет' } }] })
+          }, 50)
+        }
+        stop() {
+          setTimeout(() => {
+            this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'привет мир' } }] })
+            this.onend?.()
+          }, 50)
+        }
+      }
+      ;(window as unknown as { SpeechRecognition: unknown }).SpeechRecognition = FakeSpeechRecognition
+    })
     await page.goto('/?e2e')
     const scene = new Scene(page)
     await scene.ready()

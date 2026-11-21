@@ -18,6 +18,7 @@ export { XrSlider } from './components/XrSlider'
 export { XrTextField } from './components/XrTextField'
 export { XrKeyboard, keyboardLayouts, type XrKeyboardLayout, type XrKeyboardLayoutName, type XrKeyboardKey } from './components/XrKeyboard'
 export { XrThemeProvider } from './components/XrThemeProvider'
+export { webSpeechRecognizer, recordingRecognizer, type XrSpeechRecognizer, type XrSpeechSession, type XrSpeechHandle } from './runtime/speech'
 export { XrEnterButton } from './components/XrEnterButton'
 
 export { useXr } from './composables/useXr'

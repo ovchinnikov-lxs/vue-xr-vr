@@ -135,6 +135,9 @@ export const XrTextField = defineComponent({
       submit() {
         emit('submit', current())
       },
+      textBeforeCaret() {
+        return current().slice(0, selection()[0])
+      },
     }
 
     const onKeyDown = (event: Event) => {

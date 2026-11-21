@@ -5,6 +5,8 @@ export interface TextTarget {
   insert(text: string): void
   deleteBackward(): void
   submit(): void
+  /** The text before the caret (to know whether dictated words need a space). */
+  textBeforeCaret(): string
 }
 
 /**
