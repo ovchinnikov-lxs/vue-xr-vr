@@ -1,26 +1,46 @@
-// Creates a GitHub Release for each package version tag that has none yet,
-// with that version's section of the package CHANGELOG as notes. The fixed
-// group (vue-xr-ui + @vue-xr-ui/tokens) shares a version, so one release per
-// version is made, tagged v<version>, from the vue-xr-ui changelog.
+// Tags and creates a GitHub Release for the current version once it is on
+// npm. The fixed group (vue-xr-ui + @vue-xr-ui/tokens) shares a version, so
+// one release per version is made, tagged v<version>, with that version's
+// section of the vue-xr-ui CHANGELOG as notes.
+//
+// Whether a version is released is decided by npm, not by local tags:
+// `changeset publish` creates its tags as annotated tags, which fail without
+// a git identity and only print a warning, so a run could publish to npm and
+// leave no tag behind. This script repairs that on the next run.
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 
 const sh = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8' }).trim()
-const pkg = JSON.parse(readFileSync('packages/vue-xr-ui/package.json', 'utf8'))
-const version = pkg.version
+const ok = (cmd, args) => {
+  try {
+    sh(cmd, args)
+    return true
+  } catch {
+    return false
+  }
+}
 
-// changeset publish tags as vue-xr-ui@0.1.0; also publish the short v0.1.0 tag.
-const tags = sh('git', ['tag', '--list']).split('\n')
-if (!tags.includes(`vue-xr-ui@${version}`)) {
-  console.log(`No tag vue-xr-ui@${version}: this version is not published yet.`)
+const version = JSON.parse(readFileSync('packages/vue-xr-ui/package.json', 'utf8')).version
+if (!ok('npm', ['view', `vue-xr-ui@${version}`, 'version'])) {
+  console.log(`vue-xr-ui@${version} is not on npm: nothing to release.`)
   process.exit(0)
 }
+
+// Tag the commit that set this version, not whatever HEAD is now.
+const commit = sh('git', ['log', '-1', '--format=%H', '--', 'packages/vue-xr-ui/package.json'])
+const remoteTags = sh('git', ['ls-remote', '--tags', 'origin'])
 const tag = `v${version}`
-try {
-  sh('gh', ['release', 'view', tag])
+for (const name of [`vue-xr-ui@${version}`, `@vue-xr-ui/tokens@${version}`, tag]) {
+  if (remoteTags.includes(`refs/tags/${name}`)) continue
+  if (!ok('git', ['rev-parse', '-q', '--verify', `refs/tags/${name}`])) sh('git', ['tag', name, commit])
+  sh('git', ['push', 'origin', `refs/tags/${name}`])
+  console.log(`Pushed tag ${name}.`)
+}
+
+if (ok('gh', ['release', 'view', tag])) {
   console.log(`Release ${tag} exists.`)
   process.exit(0)
-} catch {}
+}
 
 let notes = `Release ${version}`
 const changelog = 'packages/vue-xr-ui/CHANGELOG.md'
@@ -34,9 +54,5 @@ if (existsSync(changelog)) {
   }
 }
 notes += `\n\n\`\`\`bash\npnpm add vue-xr-ui@${version}\n\`\`\``
-if (!tags.includes(tag)) {
-  sh('git', ['tag', tag, `vue-xr-ui@${version}`])
-  sh('git', ['push', 'origin', tag])
-}
-sh('gh', ['release', 'create', tag, '--title', tag, '--notes', notes])
+sh('gh', ['release', 'create', tag, '--title', tag, '--notes', notes, '--verify-tag'])
 console.log(`Created release ${tag}.`)
