@@ -206,7 +206,8 @@ export const test = base.extend<{ scene: Scene }>({
     // on start it hears "привет", on stop it settles on "привет мир".
     // `window.__fakeSpeech.fail` makes it fail with that error instead.
     await page.addInitScript(() => {
-      const control = ((window as unknown as { __fakeSpeech: { fail?: string; lang?: string } }).__fakeSpeech = {})
+      const control: { fail?: string; lang?: string } = {}
+      ;(window as unknown as { __fakeSpeech: typeof control }).__fakeSpeech = control
       class FakeSpeechRecognition {
         lang = ''
         interimResults = false
