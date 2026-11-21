@@ -35,6 +35,8 @@ export interface XrController {
 export interface XrView {
   /** World position of the viewer's head (the XR camera in a session, else the scene camera). */
   headPosition(target: Vector3): Vector3
+  /** World direction the viewer looks in (unit vector). */
+  headDirection(target: Vector3): Vector3
 }
 
 export const XR_VIEW: InjectionKey<XrView> = Symbol('vue-xr-ui:view')

@@ -30,6 +30,8 @@ export interface ColorTokens {
   focusRing: ColorToken
   disabled: ColorToken
   onDisabled: ColorToken
+  /** Dims what is behind a modal (XrDialog's backdrop). */
+  scrim: ColorToken
 }
 
 export interface TypeStyle {
@@ -97,6 +99,7 @@ export const darkTheme: ThemeTokens = {
     focusRing: '#9db5ff',
     disabled: '#2a2d36',
     onDisabled: '#6b7080',
+    scrim: 'rgba(0, 0, 0, 0.55)',
   },
   radius,
   space,
@@ -129,6 +132,7 @@ export const lightTheme: ThemeTokens = {
     focusRing: '#2f5ff0',
     disabled: '#e3e7ef',
     onDisabled: '#9aa1b0',
+    scrim: 'rgba(10, 12, 18, 0.35)',
   },
 }
 

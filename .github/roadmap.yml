@@ -146,6 +146,12 @@ issues:
     labels: [component]
     body: |
       A panel that opens in front of the user (at the reading distance, facing them), dims or blocks what is behind, closes on a Close button / Escape / a press outside. `v-model:open`. Slots: title, default, actions.
+  - title: "XrDialog: keep text focus inside an open dialog"
+    milestone: "0.2 Components"
+    labels: [component]
+    body: |
+      XrDialog blocks pointers behind its backdrop, but an XrTextField behind it can still take focus (Tab, or the hidden DOM input), and XrKeyboard then types into it.
+      Done when: while a dialog is open, fields outside it cannot take focus (or lose it on open), focus goes back to the previously focused field on close, and an e2e test covers both. Escape closes only the topmost of stacked dialogs.
   - title: "XrSelect: dropdown with a list of options"
     milestone: "0.2 Components"
     labels: [component]

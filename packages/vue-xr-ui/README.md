@@ -110,6 +110,7 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrScene>` | Put inside `<TresCanvas>`. Owns the XR session, input and frame loop. |
 | `<XrPanel>` | Floating surface, flex container with theme background. |
 | `<XrWindow>` | A panel with a handle bar: grab it with a ray, a pinch or the mouse to move it; it turns to face you. `v-model:position`. |
+| `<XrDialog>` | A modal panel that opens in front of the viewer over a backdrop that dims and blocks what is behind; closes on ×, Escape or a press outside. `v-model:open`. |
 | `<XrBox>` | Transparent flex container (the `<div>`). |
 | `<XrText>` | Text in the theme's type scale. |
 | `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`. |

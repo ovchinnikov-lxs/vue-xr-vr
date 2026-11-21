@@ -127,15 +127,15 @@ test.describe('themes', () => {
   test('an accent recolours the app, but not the card with its own theme', async ({ scene }) => {
     await scene.click('Theme')
     await scene.expectText('Danger zone')
-    const danger = await scene.background('Delete')
+    const danger = await scene.background('Delete…')
 
     await scene.click('#accent-#22c55e')
     await expect.poll(() => scene.background('Theme')).toBe('#22c55e')
-    expect(await scene.background('Delete')).toBe(danger)
+    expect(await scene.background('Delete…')).toBe(danger)
 
     await scene.click('Light')
     await expect.poll(() => scene.background('Theme')).toBe('#22c55e')
-    expect(await scene.background('Delete')).toBe('#f43f5e')
+    expect(await scene.background('Delete…')).toBe('#f43f5e')
   })
 })
 

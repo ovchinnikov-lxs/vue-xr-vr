@@ -4,6 +4,7 @@ import type { Mesh } from 'three'
 import {
   XrBox,
   XrButton,
+  XrDialog,
   XrKeyboard,
   XrPanel,
   XrSlider,
@@ -27,6 +28,8 @@ import {
 const xr = useXr()
 const theme = useXrTheme()
 const count = ref(0)
+const confirmOpen = ref(false)
+const danger = ref('Nothing deleted')
 const sound = ref(true)
 const volume = ref(40)
 // v-model keeps where the window was put; save it to restore the layout next time.
@@ -163,14 +166,23 @@ useXrFrame((delta) => {
         <XrPanel variant="sunken" :padding="4" :gap="3">
           <XrText variant="title">Danger zone</XrText>
           <XrText muted>This card has its own accent from one colour, the rest follows the app theme.</XrText>
-          <XrBox direction="row" :gap="3">
-            <XrButton>Delete</XrButton>
-            <XrButton variant="secondary">Cancel</XrButton>
+          <XrBox direction="row" align="center" :gap="3">
+            <XrButton @click="confirmOpen = true">Delete…</XrButton>
+            <XrText variant="caption" muted>{{ danger }}</XrText>
           </XrBox>
         </XrPanel>
       </XrThemeProvider>
     </XrBox>
   </XrWindow>
+
+  <!-- Opens in front of the viewer, wherever they look. -->
+  <XrDialog v-model:open="confirmOpen" title="Delete everything?" @close="danger = 'Kept'">
+    <XrText muted>The count goes back to zero. This cannot be undone.</XrText>
+    <template #actions>
+      <XrButton variant="secondary" @click="(danger = 'Kept'), (confirmOpen = false)">Cancel</XrButton>
+      <XrButton @click="(count = 0), (danger = 'Deleted'), (confirmOpen = false)">Delete</XrButton>
+    </template>
+  </XrDialog>
 
   <!-- A second window: the keyboard, below the main one while typing. -->
   <XrWindow v-if="tab === 'Type'" name="keyboard-window" :position="[0, 1.02, -0.8]">

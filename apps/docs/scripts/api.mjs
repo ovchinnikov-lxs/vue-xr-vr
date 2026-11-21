@@ -2,7 +2,7 @@
 // from its TypeScript source (types, defaults and JSDoc comments), so the API
 // reference can never drift from the code. Output: components/api/<Name>.md,
 // included into the hand-written component pages with <!--@include: -->.
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { createChecker } from 'vue-component-meta'
@@ -21,9 +21,22 @@ const typeOf = (t) => t?.replace(/ \| undefined$/, '')
 const cell = (s) => (s ?? '').toString().replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim()
 const code = (s) => (s ? `<code>${cell(s).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>` : '')
 
+// vue-component-meta drops the JSDoc on entries of an `emits` object, so
+// read `/** doc */ 'name': (...) => true` from the source.
+const emitDocs = (source) => {
+  const docs = new Map()
+  const block = source.match(/emits:\s*\{([\s\S]*?)\n  \},/)
+  if (!block) return docs
+  for (const m of block[1].matchAll(/\/\*\*([\s\S]*?)\*\/\s*'?([\w:-]+)'?\s*:/g)) {
+    docs.set(m[2], m[1].replace(/^\s*\* ?/gm, '').trim())
+  }
+  return docs
+}
+
 let count = 0
 for (const file of readdirSync(componentsDir).filter((f) => f.endsWith('.ts'))) {
   const path = join(componentsDir, file)
+  const events = emitDocs(readFileSync(path, 'utf8'))
   for (const name of checker.getExportNames(path).filter((n) => /^Xr[A-Z]/.test(n))) {
   let meta
   try {
@@ -43,7 +56,7 @@ for (const file of readdirSync(componentsDir).filter((f) => f.endsWith('.ts'))) 
   } else lines.push('None.')
   if (meta.events.length) {
     lines.push('', '### Events', '', '| Event | Payload | Description |', '| --- | --- | --- |')
-    for (const e of meta.events) lines.push(`| \`${e.name}\` | ${code(e.type?.replace(/^\[|\]$/g, '').replace(/(^|, )_/g, '$1'))} | ${cell(e.description)} |`)
+    for (const e of meta.events) lines.push(`| \`${e.name}\` | ${code(e.type?.replace(/^\[|\]$/g, '').replace(/(^|, )_/g, '$1'))} | ${cell(e.description || events.get(e.name))} |`)
   }
   if (meta.slots.length) {
     lines.push('', '### Slots', '', '| Slot | Description |', '| --- | --- |')

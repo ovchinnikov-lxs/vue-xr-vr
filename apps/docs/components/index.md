@@ -5,6 +5,7 @@
 | [`<XrScene>`](./XrScene) | Owns the XR session, input and frame loop. |
 | [`<XrPanel>`](./XrPanel) | Floating surface, flex container. |
 | [`<XrWindow>`](./XrWindow) | A panel you can pick up and move. |
+| [`<XrDialog>`](./XrDialog) | Modal panel in front of the viewer, with a backdrop. |
 | [`<XrBox>`](./XrBox) | Transparent flex container. |
 | [`<XrText>`](./XrText) | Text in the theme's type scale. |
 | [`<XrButton>`](./XrButton) | Button, three variants, three sizes. |

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 import { templateCompilerOptions } from '@tresjs/core'
 
 const components = [
-  ['Layout', ['XrScene', 'XrPanel', 'XrWindow', 'XrBox', 'XrText']],
+  ['Layout', ['XrScene', 'XrPanel', 'XrWindow', 'XrDialog', 'XrBox', 'XrText']],
   ['Controls', ['XrButton', 'XrToggle', 'XrSlider', 'XrTabs', 'XrList', 'XrTooltip']],
   ['Text input', ['XrTextField', 'XrKeyboard']],
   ['App', ['XrThemeProvider', 'XrEnterButton']],

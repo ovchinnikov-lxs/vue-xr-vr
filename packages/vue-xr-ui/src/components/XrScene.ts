@@ -68,9 +68,10 @@ export const XrScene = defineComponent({
       },
     }
     provide(FRAME_HUB, hub)
+    const viewer = () => (renderer.xr.isPresenting ? renderer.xr.getCamera() : getCamera())
     provide(XR_VIEW, {
-      headPosition: (target) =>
-        (renderer.xr.isPresenting ? renderer.xr.getCamera() : getCamera()).getWorldPosition(target),
+      headPosition: (target) => viewer().getWorldPosition(target),
+      headDirection: (target) => viewer().getWorldDirection(target),
     })
 
     const tick = (delta: number, frame: XRFrame | undefined) => {
