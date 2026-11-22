@@ -52,6 +52,12 @@ function toggleTheme() {
 }
 const onAccent = (color: string) => withAccent(darkTheme, color).colors.onPrimary
 
+const typeHint = computed(() =>
+  xr.systemKeyboard.value
+    ? 'Tap the field: the headset keyboard opens. Enter sends.'
+    : 'Tap the field, then type on the keyboard below. Enter sends.',
+)
+
 // The keyboard's languages are a prop; v-model:layout is the active one.
 const languages = ['en', 'ru', 'uk', 'de', 'fr', 'es'] as const
 const language = ref(0)
@@ -134,8 +140,8 @@ useXrFrame((delta) => {
     <XrBox v-else-if="tab === 'Type'" :gap="3">
       <XrText variant="label">Message</XrText>
       <XrTextField v-model="message" name="message" placeholder="Привет! Type here…" @submit="send" />
-      <XrText variant="caption" muted>Tap the field, then type on the keyboard below. Enter sends.</XrText>
-      <XrTabs v-model="languageTab" name="languages" :tabs="languages.map((l) => l.toUpperCase())" block />
+      <XrText variant="caption" muted>{{ typeHint }}</XrText>
+      <XrTabs v-if="!xr.systemKeyboard.value" v-model="languageTab" name="languages" :tabs="languages.map((l) => l.toUpperCase())" block />
       <XrPanel variant="sunken" :padding="4" :gap="2">
         <XrText v-if="sent.length === 0" muted>Nothing sent yet</XrText>
         <XrText v-for="(text, i) in sent" :key="i + text" name="sent">{{ text }}</XrText>
@@ -184,8 +190,9 @@ useXrFrame((delta) => {
     </template>
   </XrDialog>
 
-  <!-- A second window: the keyboard, below the main one while typing. -->
-  <XrWindow v-if="tab === 'Type'" name="keyboard-window" :position="[0, 1.02, -0.8]">
+  <!-- A second window: the keyboard, below the main one while typing.
+       Quest Browser opens its system keyboard instead, so then there is none. -->
+  <XrWindow v-if="tab === 'Type' && !xr.systemKeyboard.value" name="keyboard-window" :position="[0, 1.02, -0.8]">
     <XrKeyboard v-model:layout="language" name="keyboard" :layouts="[...languages]" enter-label="Send" />
   </XrWindow>
 </template>

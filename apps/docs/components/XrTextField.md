@@ -1,6 +1,6 @@
 # <code>&lt;XrTextField&gt;</code>
 
-A single-line text input with a real caret: tap where to type. The physical keyboard types into it on a desktop, `<XrKeyboard>` in the headset. Enter emits `submit`. See [Text and voice input](/guide/text-input).
+A single-line text input with a real caret: tap where to type. The physical keyboard types into it on a desktop, `<XrKeyboard>` or the headset's system keyboard (Meta Quest) in the headset. Enter emits `submit`. See [Text and voice input](/guide/text-input).
 
 ## Usage
 

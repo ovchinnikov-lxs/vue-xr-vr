@@ -9,6 +9,24 @@ with `<XrKeyboard>`: the keyboard types into the last focused field.
 <XrKeyboard :layouts="['en', 'ru']" enter-label="Send" />
 ```
 
+## System keyboard (Meta Quest)
+
+Quest Browser has its own keyboard in immersive sessions: it opens by itself
+when a text field is focused (`XRSession.isSystemKeyboardSupported`). There,
+`<XrKeyboard>` without `v-model` hides itself, so the user never sees two
+keyboards, and the field's caret follows what the system keyboard types.
+`useXr().systemKeyboard` tells you when this is the case, e.g. to drop the
+window the keyboard sits in:
+
+```vue
+<XrWindow v-if="!xr.systemKeyboard.value">
+  <XrKeyboard />
+</XrWindow>
+```
+
+Pass `:prefer-system-keyboard="false"` to keep `<XrKeyboard>` anyway. A
+keyboard with `v-model` always shows: it is the only way to edit its string.
+
 ## Layouts
 
 Built in: `en` `ru` `uk` `de` `fr` `es`. Add your own:

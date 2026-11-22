@@ -152,6 +152,12 @@ issues:
     body: |
       XrDialog blocks pointers behind its backdrop, but an XrTextField behind it can still take focus (Tab, or the hidden DOM input), and XrKeyboard then types into it.
       Done when: while a dialog is open, fields outside it cannot take focus (or lose it on open), focus goes back to the previously focused field on close, and an e2e test covers both. Escape closes only the topmost of stacked dialogs.
+  - title: "Quest system keyboard: don't show XrKeyboard too, keep the caret in sync"
+    milestone: "0.2 Components"
+    labels: [bug, input, needs-headset]
+    body: |
+      In Quest Browser, focusing an XrTextField opened both XrKeyboard and the system keyboard, and the caret stayed behind system keyboard input.
+      Done when: XrKeyboard without v-model hides in a session with `isSystemKeyboardSupported`, `useXr().systemKeyboard` exists, the caret follows system keyboard input, e2e covers both.
   - title: "XrSelect: dropdown with a list of options"
     milestone: "0.2 Components"
     labels: [component]

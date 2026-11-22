@@ -1,6 +1,7 @@
 import { defineComponent, markRaw, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { Container, Input } from '@pmndrs/uikit'
 import { useXrTheme } from '../composables/useXrTheme'
+import { useXrFrame } from '../composables/useXrFrame'
 import { useUikitNode } from '../runtime/node'
 import { activeTextTarget, type TextTarget } from '../runtime/text-target'
 
@@ -8,8 +9,9 @@ import { activeTextTarget, type TextTarget } from '../runtime/text-target'
  * A single-line text field: `<XrTextField v-model="name" placeholder="Your name" />`.
  *
  * Point at it or poke it to focus; the caret goes where you touched. Type
- * with an <XrKeyboard> (it types into the field focused last), or with a
- * physical keyboard on desktop. Enter emits `submit`.
+ * with an <XrKeyboard> (it types into the field focused last), with a
+ * physical keyboard on desktop, or with the headset's system keyboard
+ * (Meta Quest Browser). Enter emits `submit`.
  */
 export const XrTextField = defineComponent({
   name: 'XrTextField',
@@ -139,6 +141,15 @@ export const XrTextField = defineComponent({
         return current().slice(0, selection()[0])
       },
     }
+
+    // uikit reads the caret from the hidden <input> only on its input, key and
+    // focus events. With Quest's system keyboard the caret stayed put while
+    // the text grew past it: the selection evidently moves after the input
+    // event, with no event of its own. Re-reading it every frame while focused catches any such order.
+    // (focus() without a range on a focused input only re-reads the selection.)
+    useXrFrame(() => {
+      if (input.hasFocus.peek()) input.focus()
+    })
 
     const onKeyDown = (event: Event) => {
       if ((event as KeyboardEvent).key === 'Enter') target.submit()

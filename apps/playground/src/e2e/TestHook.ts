@@ -201,7 +201,7 @@ export default defineComponent({
           if (!input && o instanceof Input) input = o as Input
         })
         if (!input) throw new Error(`No input in "${label}"`)
-        return { value: input.currentSignal.value, focused: input.hasFocus.value }
+        return { value: input.currentSignal.value, focused: input.hasFocus.value, selection: input.selectionRange.value }
       },
       /** A component's resolved background colour. */
       background: (label: string) => String((targetFor(label).properties.value as { backgroundColor?: unknown }).backgroundColor ?? ''),

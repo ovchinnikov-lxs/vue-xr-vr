@@ -29,6 +29,7 @@ const xr = useXr()
 xr.isPresenting.value // in a session?
 xr.mode.value         // 'immersive-vr' | 'immersive-ar' | null
 xr.supported.value    // { vr: boolean, ar: boolean }
+xr.systemKeyboard.value // the session has a system keyboard (Quest Browser)
 await xr.enterVR()
 await xr.enterAR()
 await xr.exit()

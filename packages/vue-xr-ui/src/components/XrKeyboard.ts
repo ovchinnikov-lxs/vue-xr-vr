@@ -1,10 +1,12 @@
-import { computed, defineComponent, h, onBeforeUnmount, ref, type PropType } from 'vue'
+import { computed, defineComponent, h, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { Container, Svg } from '@pmndrs/uikit'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
 import { useUikitNode } from '../runtime/node'
 import { usePress } from '../runtime/press'
 import { activeTextTarget } from '../runtime/text-target'
+import { injectAppWide } from '../runtime/app-inject'
+import { XR_CONTROLLER } from '../runtime/context'
 import { webSpeechRecognizer, type XrSpeechHandle, type XrSpeechRecognizer } from '../runtime/speech'
 import { XrText } from './XrText'
 
@@ -77,6 +79,10 @@ const REPEAT_MS = 70
  *
  * Inside a panel or window it is a borderless block; on its own at the top
  * level of the scene it is a floating keyboard with its own background.
+ *
+ * In a session with a system keyboard (Meta Quest Browser) the headset's
+ * own keyboard opens when a field is focused, so a keyboard without v-model
+ * hides itself there (see `preferSystemKeyboard`).
  */
 export const XrKeyboard = defineComponent({
   name: 'XrKeyboard',
@@ -109,6 +115,12 @@ export const XrKeyboard = defineComponent({
     voice: { type: [Boolean, Object] as PropType<boolean | XrSpeechRecognizer>, default: true },
     /** Only for a root keyboard: reading distance in metres. */
     distance: Number,
+    /**
+     * Hide while the XR session has a system keyboard (Meta Quest Browser),
+     * which opens by itself when a text field is focused. Only applies
+     * without v-model: a keyboard bound to a string is the only way to edit it.
+     */
+    preferSystemKeyboard: { type: Boolean, default: true },
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
@@ -121,6 +133,10 @@ export const XrKeyboard = defineComponent({
   },
   setup(props, { emit }) {
     const theme = useXrTheme()
+    const xr = injectAppWide(XR_CONTROLLER)
+    const hidden = computed(
+      () => props.preferSystemKeyboard && props.modelValue === undefined && Boolean(xr?.systemKeyboard.value),
+    )
     const shift = ref<Shift>('off')
     let lastShiftTap = 0
     const localLayout = ref(0)
@@ -305,9 +321,11 @@ export const XrKeyboard = defineComponent({
               }
             : {}),
           ...props.ui,
+          ...(hidden.value ? { display: 'none' } : {}),
         }
       },
     )
+    watch(hidden, (now) => now && stopListening())
 
     const label = (key: Key): string => {
       switch (key.kind) {

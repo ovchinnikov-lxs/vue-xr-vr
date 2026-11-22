@@ -28,6 +28,8 @@ export function createXrController(): InternalXrController {
     mode,
     supported,
     isPresenting: computed(() => session.value != null),
+    // Not in the WebXR typings: a Chromium attribute that only Quest Browser sets to true.
+    systemKeyboard: computed(() => Boolean((session.value as { isSystemKeyboardSupported?: boolean } | undefined)?.isSystemKeyboardSupported)),
     async enterVR() {
       await requireStore().enterVR()
     },

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
 // Playground: the "Type" tab has <XrTextField name="message"> and opens a
@@ -7,6 +8,22 @@ import { expect, test } from './fixtures'
 // accent swatches (`accent-<hex>`) and a "Danger zone" card with its own accent.
 
 const field = '#message'
+
+/**
+ * Types like Quest's system keyboard: it changes the hidden <input> and
+ * fires `input`, but moves the selection only after that event, with no
+ * event of its own.
+ */
+async function typeLikeSystemKeyboard(page: Page, text: string) {
+  await page.evaluate((text) => {
+    const el = document.activeElement as HTMLInputElement
+    const caret = el.selectionStart ?? el.value.length
+    el.value = el.value.slice(0, caret) + text + el.value.slice(caret)
+    el.setSelectionRange(caret, caret)
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    el.setSelectionRange(caret + text.length, caret + text.length)
+  }, text)
+}
 
 test.describe('text field and keyboard in the browser', () => {
   test.beforeEach(async ({ scene }) => {
@@ -85,6 +102,19 @@ test.describe('text field and keyboard in the browser', () => {
     await expect.poll(async () => (await scene.inputState(field)).value).toBe('helxlo')
     await page.keyboard.press('Enter')
     await scene.expectText('helxlo')
+  })
+
+  test('the caret follows text typed by a system keyboard', async ({ scene, page }) => {
+    await scene.click(field)
+    await expect.poll(async () => (await scene.inputState(field)).focused).toBe(true)
+    await typeLikeSystemKeyboard(page, 'abc')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('abc')
+    await expect.poll(async () => (await scene.inputState(field)).selection).toEqual([3, 3])
+    // The next key goes after the caret, and so does our keyboard's.
+    await typeLikeSystemKeyboard(page, 'd')
+    await scene.click('#key-e')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('abcde')
+    await expect.poll(async () => (await scene.inputState(field)).selection).toEqual([5, 5])
   })
 })
 
@@ -173,5 +203,36 @@ test.describe('keyboard in the emulated Quest 3', () => {
     for (const key of ['#key-y', '#key-o']) await scene.poke('right', key)
     await scene.poke('left', '#key-u')
     await expect.poll(async () => (await scene.inputState(field)).value).toBe('you')
+  })
+})
+
+test.describe('Quest system keyboard', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    // Quest Browser's sessions say they have a system keyboard; IWER's don't.
+    await page.evaluate(() => {
+      const xr = navigator.xr!
+      const request = xr.requestSession.bind(xr)
+      xr.requestSession = async (...args) => {
+        const session = await request(...args)
+        Object.defineProperty(session, 'isSystemKeyboardSupported', { value: true })
+        return session
+      }
+    })
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+    await scene.rayClick('right', 'Type')
+    await scene.expectText('Tap the field: the headset keyboard opens. Enter sends.')
+  })
+
+  test('our keyboard stays hidden and the system keyboard types with the caret after the text', async ({ scene, page }) => {
+    expect(await scene.isShown('#key-q')).toBe(false)
+    await scene.rayClick('right', field)
+    await expect.poll(async () => (await scene.inputState(field)).focused).toBe(true)
+    await typeLikeSystemKeyboard(page, 'hi')
+    await typeLikeSystemKeyboard(page, '!')
+    await expect.poll(async () => (await scene.inputState(field)).value).toBe('hi!')
+    await expect.poll(async () => (await scene.inputState(field)).selection).toEqual([3, 3])
+    expect(await scene.isShown('#key-q')).toBe(false)
   })
 })

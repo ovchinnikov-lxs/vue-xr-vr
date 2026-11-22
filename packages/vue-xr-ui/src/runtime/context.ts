@@ -25,6 +25,12 @@ export interface XrController {
   session: ShallowRef<XRSession | undefined>
   mode: Ref<XrMode | null>
   isPresenting: Readonly<Ref<boolean>>
+  /**
+   * The session has a system keyboard (Meta Quest Browser:
+   * `XRSession.isSystemKeyboardSupported`). It opens by itself when a text
+   * field is focused, so <XrKeyboard> hides itself to not show two keyboards.
+   */
+  systemKeyboard: Readonly<Ref<boolean>>
   supported: Ref<{ vr: boolean; ar: boolean }>
   enterVR(): Promise<void>
   enterAR(): Promise<void>
