@@ -9,6 +9,7 @@ import {
   XrDialog,
   XrIcon,
   XrKeyboard,
+  XrNumberInput,
   XrPanel,
   XrProgress,
   XrRadioGroup,
@@ -63,6 +64,7 @@ const someRooms = computed(() => !allRooms.value && Object.values(rooms.value).s
 const setAllRooms = (on: boolean) => Object.keys(rooms.value).forEach((room) => (rooms.value[room] = on))
 const quality = ref('High')
 const synced = ref(0)
+const guests = ref(2)
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -190,6 +192,11 @@ useXrFrame((delta) => {
           <XrText variant="caption" muted>Quality: {{ quality }}</XrText>
           <XrRadioGroup v-model="quality" name="quality" :options="['Low', 'Medium', 'High']" />
         </XrBox>
+      </XrBox>
+
+      <XrBox direction="row" align="center" :gap="4">
+        <XrText variant="label">Guests: {{ guests }}</XrText>
+        <XrNumberInput v-model="guests" name="guests" :min="1" :max="8" :ui="{ flexGrow: 1 }" />
       </XrBox>
 
       <XrPanel variant="sunken" :padding="4" :gap="3">

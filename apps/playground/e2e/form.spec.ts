@@ -157,3 +157,62 @@ test.describe('progress in the emulated Quest 3', () => {
     await scene.expectText('25%')
   })
 })
+
+// Number input #guests: 1..8, starting at 2, mirrored as "Guests: N".
+
+test.describe('number input in the browser', () => {
+  test('− and + step and stop at the limits; typing is clamped on Enter', async ({ scene, page }) => {
+    await openForm(scene, (l) => scene.click(l))
+    await scene.click('#guests.increment')
+    await scene.expectText('Guests: 3')
+    await scene.click('#guests.decrement')
+    await scene.click('#guests.decrement')
+    await scene.expectText('Guests: 1')
+    // At the minimum − is disabled.
+    await scene.click('#guests.decrement')
+    await page.waitForTimeout(200)
+    await scene.expectText('Guests: 1')
+
+    await scene.click('#guests.field')
+    await expect.poll(async () => (await scene.inputState('#guests.field')).focused).toBe(true)
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type('20')
+    await page.keyboard.press('Enter')
+    await scene.expectText('Guests: 8')
+    await expect.poll(async () => (await scene.inputState('#guests.field')).value).toBe('8')
+
+    // Not a number: the last value comes back.
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type('abc')
+    await page.keyboard.press('Enter')
+    await expect.poll(async () => (await scene.inputState('#guests.field')).value).toBe('8')
+    await scene.expectText('Guests: 8')
+  })
+})
+
+test.describe('number input in the emulated Quest 3', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+  })
+
+  test('controller ray steps, and holding the trigger keeps stepping', async ({ scene }) => {
+    await openForm(scene, (l) => scene.rayClick('right', l))
+    await scene.rayClick('right', '#guests.increment')
+    await scene.expectText('Guests: 3')
+    // Held for a second: it repeats up to the maximum and stops there.
+    await scene.rayClick('right', '#guests.increment', { holdMs: 1200 })
+    await scene.expectText('Guests: 8')
+  })
+
+  test('a fingertip pokes − and +', async ({ scene }) => {
+    await scene.setInputMode('hand')
+    await openForm(scene, (l) => scene.poke('right', l))
+    await scene.poke('right', '#guests.decrement')
+    await scene.expectText('Guests: 1')
+    await scene.poke('right', '#guests.increment')
+    // A poke lasts 15 frames, which on a slow emulator can pass the hold delay and repeat.
+    await expect.poll(async () => Number((await scene.texts()).find((t) => t.startsWith('Guests: '))?.slice(8))).toBeGreaterThanOrEqual(2)
+  })
+})

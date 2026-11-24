@@ -20,6 +20,7 @@
 | [`<XrSelect>`](./XrSelect) | Dropdown with a floating list of options. |
 | [`<XrTooltip>`](./XrTooltip) | Hover hint. |
 | [`<XrTextField>`](./XrTextField) | Single-line text input. |
+| [`<XrNumberInput>`](./XrNumberInput) | Number with − / + and a field. |
 | [`<XrKeyboard>`](./XrKeyboard) | On-screen keyboard with voice input. |
 | [`<XrThemeProvider>`](./XrThemeProvider) | Theme for a part of the scene. |
 | [`<XrEnterButton>`](./XrEnterButton) | DOM button to enter VR or AR. |
