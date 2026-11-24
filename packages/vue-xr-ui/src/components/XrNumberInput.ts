@@ -76,17 +76,25 @@ export const XrNumberInput = defineComponent({
       },
     )
 
+    // The value just emitted: several steps can run before the parent
+    // passes it back down (a held button catching up after a slow frame).
+    let latest: number | undefined
+    watch(
+      () => props.modelValue,
+      () => (latest = undefined),
+    )
     const set = (value: number) => {
       const next = clamp(value)
       text.value = format(next)
-      if (next === props.modelValue) return
+      if (next === (latest ?? props.modelValue)) return
+      latest = next
       emit('update:modelValue', next)
       emit('change', next)
     }
-    const start = () => props.modelValue ?? (Number.isFinite(props.min) ? props.min : Number.isFinite(props.max) ? Math.min(0, props.max) : 0)
+    const start = () => latest ?? props.modelValue ?? (Number.isFinite(props.min) ? props.min : Number.isFinite(props.max) ? Math.min(0, props.max) : 0)
     const stepBy = (direction: 1 | -1) => {
       // Without a value, the first press lands on the start value itself.
-      if (props.modelValue == null) return set(start())
+      if (latest == null && props.modelValue == null) return set(start())
       set(start() + direction * props.step)
     }
     const commit = () => {
@@ -97,6 +105,11 @@ export const XrNumberInput = defineComponent({
 
     const atMin = computed(() => props.modelValue != null && props.modelValue <= props.min)
     const atMax = computed(() => props.modelValue != null && props.modelValue >= props.max)
+    // Not computed: `latest` is not reactive and moves within one tick.
+    const blockedAt = (direction: 1 | -1) => {
+      const value = latest ?? props.modelValue
+      return value != null && (direction > 0 ? value >= props.max : value <= props.min)
+    }
 
     /** − / +: step on release, or keep stepping while held. */
     const stepper = (direction: 1 | -1, blocked: () => boolean) => {
@@ -106,6 +119,7 @@ export const XrNumberInput = defineComponent({
         clearTimeout(hold)
         clearInterval(hold)
         hold = undefined
+        latest = undefined
       }
       onBeforeUnmount(stop)
       return usePress({
@@ -113,10 +127,21 @@ export const XrNumberInput = defineComponent({
         onDown: () => {
           repeated = false
           stop()
+          const start = performance.now()
+          let done = 0
+          // Steps follow the clock, not the timer: a busy frame (a slow
+          // headset frame delays timers) catches up instead of slowing down.
+          const tick = () => {
+            const due = Math.floor((performance.now() - start - HOLD_MS) / REPEAT_MS) + 1
+            for (; done < due; done++) {
+              if (props.disabled || blocked()) return stop()
+              repeated = true
+              stepBy(direction)
+            }
+          }
           hold = setTimeout(() => {
-            repeated = true
-            stepBy(direction)
-            hold = setInterval(() => (props.disabled || blocked() ? stop() : stepBy(direction)), REPEAT_MS)
+            tick()
+            hold = setInterval(tick, REPEAT_MS)
           }, HOLD_MS)
         },
         onRelease: stop,
@@ -126,8 +151,8 @@ export const XrNumberInput = defineComponent({
         },
       })
     }
-    const minus = stepper(-1, () => atMin.value)
-    const plus = stepper(1, () => atMax.value)
+    const minus = stepper(-1, () => blockedAt(-1))
+    const plus = stepper(1, () => blockedAt(1))
 
     const { render } = useUikitNode(
       (initial) => new Container(initial),
