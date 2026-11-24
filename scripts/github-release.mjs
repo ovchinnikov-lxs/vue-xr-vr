@@ -22,7 +22,15 @@ const ok = (cmd, args) => {
 }
 
 const version = JSON.parse(readFileSync('packages/vue-xr-ui/package.json', 'utf8')).version
-if (!ok('npm', ['view', `vue-xr-ui@${version}`, 'version'])) {
+// Right after `changeset publish` the registry can still answer 404 for the
+// new version (0.2.0 did, 2 s after publishing), so ask for up to a minute.
+const onNpm = () => ok('npm', ['view', `vue-xr-ui@${version}`, 'version'])
+let published = onNpm()
+for (let i = 0; !published && process.env.CI && i < 6; i++) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10_000)
+  published = onNpm()
+}
+if (!published) {
   console.log(`vue-xr-ui@${version} is not on npm: nothing to release.`)
   process.exit(0)
 }
