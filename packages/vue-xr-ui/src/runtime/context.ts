@@ -44,6 +44,8 @@ export interface XrView {
   headPosition(target: Vector3): Vector3
   /** World direction the viewer looks in (unit vector). */
   headDirection(target: Vector3): Vector3
+  /** Calls `cb` when the user recentres the view (the floor origin moves). */
+  onRecenter(cb: () => void): () => void
 }
 
 /** A pointerdown seen by <XrScene>'s press hub: the event plus the object it hit first. */

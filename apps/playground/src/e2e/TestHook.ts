@@ -287,6 +287,37 @@ export default defineComponent({
         await frames(2)
       },
       exit: () => xr.exit(),
+      /** Turns the emulated head to `yaw` degrees (0 = looking down -z, positive = to the left), level. */
+      async turnHead(yaw: number) {
+        const q = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), (yaw * Math.PI) / 180)
+        device().quaternion.set(q.x, q.y, q.z, q.w)
+        await frames(2)
+      },
+      /** Moves the emulated head to a point in the session's floor space. */
+      async moveHead(position: [number, number, number]) {
+        device().position.set(...position)
+        await frames(2)
+      },
+      /** The user recentres the view (Meta button held). */
+      async recenter() {
+        device().recenter()
+        await frames(3)
+      },
+      /** Degrees between the way a label's panel faces (+z) and the direction to the head. */
+      facingAngle(label: string) {
+        const root = rootOf(targetFor(label)) as unknown as Object3D
+        const facing = root.getWorldDirection(new Vector3())
+        const camera = (tres.renderer as unknown as WebGLRenderer).xr.getCamera()
+        const toHead = camera.getWorldPosition(new Vector3()).sub(worldPoint(targetFor(label)))
+        return (facing.angleTo(toHead) * 180) / Math.PI
+      },
+      /** Head position and the level direction it looks in (unit, y = 0), in world space. */
+      head() {
+        const camera = (tres.renderer as unknown as WebGLRenderer).xr.getCamera()
+        const position = camera.getWorldPosition(new Vector3())
+        const forward = camera.getWorldDirection(new Vector3()).setY(0).normalize()
+        return { position: position.toArray(), forward: forward.toArray() }
+      },
       /** Starts logging pointer events on a label's component, as "type:pointerType". */
       recordEvents(label: string) {
         const target = targetFor(label) as unknown as {

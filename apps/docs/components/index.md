@@ -22,5 +22,7 @@
 | [`<XrTextField>`](./XrTextField) | Single-line text input. |
 | [`<XrNumberInput>`](./XrNumberInput) | Number with − / + and a field. |
 | [`<XrKeyboard>`](./XrKeyboard) | On-screen keyboard with voice input. |
+| [`<XrFollow>`](./XrFollow) | Keeps content in view: lazy follow, faces you. |
+| [`<XrBillboard>`](./XrBillboard) | Turns content to face the viewer. |
 | [`<XrThemeProvider>`](./XrThemeProvider) | Theme for a part of the scene. |
 | [`<XrEnterButton>`](./XrEnterButton) | DOM button to enter VR or AR. |

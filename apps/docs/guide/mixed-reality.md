@@ -50,3 +50,24 @@ Scanned rooms: `living_room`, `office_small`, `office_large`,
 `meeting_room`, `music_room`. Furnished rooms: `kitchen`, `bedroom`,
 `home_office`, `conference_room`, `music_studio`, `open_office`,
 `open_studio`, `sunlit_living_room`.
+
+## Panels that follow you
+
+`<XrFollow>` keeps a HUD in view; `<XrBillboard>` keeps a label in place
+but turned toward you:
+
+```vue
+<XrFollow :distance="0.8" :height="-0.2">
+  <XrPanel :width="300">
+    <XrToggle v-model="follow">Follow me</XrToggle>
+  </XrPanel>
+</XrFollow>
+
+<XrBillboard :position="[1.2, 1.1, -2]">
+  <XrPanel :width="160"><XrText>Lamp</XrText></XrPanel>
+</XrBillboard>
+```
+
+The follow is lazy: small head movements leave the panel where it is, a real
+turn brings it back. That is calmer than a head-locked HUD and still keeps
+it reachable. Give the user a way to pin it (`:active="false"`).

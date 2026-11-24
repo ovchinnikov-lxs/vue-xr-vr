@@ -35,6 +35,11 @@ interface XrTest {
   frameTime(): number
   pullTrigger(hand: Hand, holdMs?: number): Promise<void>
   exit(): Promise<void>
+  turnHead(yaw: number): Promise<void>
+  moveHead(position: [number, number, number]): Promise<void>
+  recenter(): Promise<void>
+  facingAngle(label: string): number
+  head(): { position: [number, number, number]; forward: [number, number, number] }
   recordEvents(label: string): void
   events(): string[]
 }
@@ -104,6 +109,41 @@ export class Scene {
 
   events() {
     return this.page.evaluate(() => window.__xrTest!.events())
+  }
+
+  /** Turns the emulated head to `yaw` degrees, level (0 looks down -z, positive turns left). */
+  turnHead(yaw: number) {
+    return this.page.evaluate((y) => window.__xrTest!.turnHead(y), yaw)
+  }
+
+  moveHead(position: [number, number, number]) {
+    return this.page.evaluate((p) => window.__xrTest!.moveHead(p), position)
+  }
+
+  recenter() {
+    return this.page.evaluate(() => window.__xrTest!.recenter())
+  }
+
+  /** Degrees between where a label's panel faces and the direction to the head (0 = faces you). */
+  facingAngle(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.facingAngle(l), label)
+  }
+
+  head() {
+    return this.page.evaluate(() => window.__xrTest!.head())
+  }
+
+  /**
+   * Where a label is seen from the head: `angle` in degrees off the level
+   * direction the head looks in, `distance` in metres (horizontal).
+   */
+  async seenAt(label: string) {
+    const [{ position, forward }, center] = await Promise.all([this.head(), this.worldCenter(label)])
+    const dx = center[0] - position[0]
+    const dz = center[2] - position[2]
+    const distance = Math.hypot(dx, dz)
+    const cos = (dx * forward[0] + dz * forward[2]) / distance
+    return { angle: (Math.acos(Math.min(1, cos)) * 180) / Math.PI, distance, height: center[1] - position[1] }
   }
 
   /** Ends the session the way the headset's system menu would. */

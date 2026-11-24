@@ -109,9 +109,14 @@ export const XrScene = defineComponent({
     }
     provide(PRESS_HUB, presses)
     const viewer = () => (renderer.xr.isPresenting ? renderer.xr.getCamera() : getCamera())
+    const recenterListeners = new Set<() => void>()
     provide(XR_VIEW, {
       headPosition: (target) => viewer().getWorldPosition(target),
       headDirection: (target) => viewer().getWorldDirection(target),
+      onRecenter(cb) {
+        recenterListeners.add(cb)
+        return () => recenterListeners.delete(cb)
+      },
     })
 
     const tick = (delta: number, frame: XRFrame | undefined) => {
@@ -162,7 +167,10 @@ export const XrScene = defineComponent({
 
     // A recentre (Meta button held) fires `reset` on the reference space.
     let space: XRReferenceSpace | undefined
-    const onReset = () => emit('recenter')
+    const onReset = () => {
+      for (const cb of [...recenterListeners]) cb()
+      emit('recenter')
+    }
     const watchSpace = (next: XRReferenceSpace | undefined) => {
       if (next === space) return
       space?.removeEventListener('reset', onReset)

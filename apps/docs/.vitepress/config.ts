@@ -5,6 +5,7 @@ const components = [
   ['Layout', ['XrScene', 'XrPanel', 'XrWindow', 'XrDialog', 'XrBox', 'XrText']],
   ['Controls', ['XrButton', 'XrIcon', 'XrToggle', 'XrCheckbox', 'XrRadioGroup', 'XrSlider', 'XrProgress', 'XrTabs', 'XrList', 'XrSelect', 'XrTooltip']],
   ['Text input', ['XrTextField', 'XrNumberInput', 'XrKeyboard']],
+  ['Mixed reality', ['XrFollow', 'XrBillboard']],
   ['App', ['XrThemeProvider', 'XrEnterButton']],
 ] as const
 

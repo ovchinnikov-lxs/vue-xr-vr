@@ -127,6 +127,8 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrTextField>` | Single-line text input, `v-model`, `placeholder`, `type="password"`. Real caret: tap where to type. Physical keyboard works on desktop. Enter emits `submit`. |
 | `<XrNumberInput>` | Number with − / + (held: repeats) and a field, `v-model`, `min` / `max` / `step` / `precision`, `suffix`. Typed text is clamped on Enter or blur. |
 | `<XrKeyboard>` | On-screen keyboard. `layouts`: built-in `en` `ru` `uk` `de` `fr` `es` and/or your own (`{ label, name, locale, rows }`), `v-model:layout`, `digits`, `symbols` (?123 page), `spaceLabel`, `keySize`, `enterLabel`, `voice`. Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
+| `<XrFollow>` | Keeps content in view: sits in front of the viewer, lazily follows turns (`angle`, `distance`, `height`), faces you; `active` pins it. |
+| `<XrBillboard>` | Turns content to face the viewer, upright (`axis="y"`) or fully. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
 
