@@ -13,6 +13,7 @@
 | [`<XrSlider>`](./XrSlider) | Number in a range. |
 | [`<XrTabs>`](./XrTabs) | Segmented tabs. |
 | [`<XrList>`](./XrList) | Scrolling list with items. |
+| [`<XrSelect>`](./XrSelect) | Dropdown with a floating list of options. |
 | [`<XrTooltip>`](./XrTooltip) | Hover hint. |
 | [`<XrTextField>`](./XrTextField) | Single-line text input. |
 | [`<XrKeyboard>`](./XrKeyboard) | On-screen keyboard with voice input. |

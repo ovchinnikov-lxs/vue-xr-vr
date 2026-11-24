@@ -1,6 +1,6 @@
 import { Comment, Fragment, Text, h, inject, markRaw, onBeforeUnmount, provide, useAttrs, watch, type Slots, type VNode, type VNodeChild } from 'vue'
 import { Container, type Component as UikitComponent } from '@pmndrs/uikit'
-import { FRAME_HUB, UIKIT_PARENT } from './context'
+import { FRAME_HUB, PRESS_HUB, UIKIT_PARENT } from './context'
 import { defaultFontFamilies } from './fonts'
 
 type Properties = Record<string, unknown>
@@ -57,6 +57,8 @@ export function useUikitNode<T extends UikitComponent>(
     const hub = inject(FRAME_HUB, undefined)
     if (!hub) throw new Error('[vue-xr-ui] vue-xr-ui components must be placed inside <XrScene>.')
     onBeforeUnmount(hub.add((delta) => node.update(delta)))
+    const presses = inject(PRESS_HUB, undefined)
+    if (presses) onBeforeUnmount(presses.addRoot(node))
   } else {
     // Setup runs in template order, so siblings are added in the right order
     // on first mount. TODO: keep order for children inserted later (v-if, v-for).

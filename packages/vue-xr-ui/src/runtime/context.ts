@@ -2,7 +2,8 @@ import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { Component as UikitComponent } from '@pmndrs/uikit'
 import type { createXRStore } from '@pmndrs/xr'
 import type { ThemeTokens } from '@vue-xr-ui/tokens'
-import type { Vector3 } from 'three'
+import type { Object3D, Vector3 } from 'three'
+import type { ControlPointerEvent } from './press'
 
 /** Called every frame, in and out of an XR session. `delta` is in milliseconds. */
 export type FrameCallback = (delta: number, frame: XRFrame | undefined) => void
@@ -45,9 +46,25 @@ export interface XrView {
   headDirection(target: Vector3): Vector3
 }
 
+/** A pointerdown seen by <XrScene>'s press hub: the event plus the object it hit first. */
+export type ScenePointerEvent = ControlPointerEvent & { object?: Object3D }
+
+/**
+ * Every press that starts in the scene, provided by <XrScene>: on any
+ * vue-xr-ui root or inside it, and on empty space. Popups use it to close on
+ * a press outside them. Presses on other three.js objects are not seen.
+ */
+export interface PressHub {
+  /** Listens on a layout root; called by every root (runtime/node.ts). */
+  addRoot(root: Object3D): () => void
+  /** Calls `cb` on every pointerdown on a root, inside it, or on empty space. */
+  onDown(cb: (event: ScenePointerEvent) => void): () => void
+}
+
 export const XR_VIEW: InjectionKey<XrView> = Symbol('vue-xr-ui:view')
 export const XR_CONTROLLER: InjectionKey<XrController> = Symbol('vue-xr-ui:controller')
 export const XR_THEME: InjectionKey<Ref<ThemeTokens>> = Symbol('vue-xr-ui:theme')
+export const PRESS_HUB: InjectionKey<PressHub> = Symbol('vue-xr-ui:press-hub')
 export const FRAME_HUB: InjectionKey<FrameHub> = Symbol('vue-xr-ui:frame-hub')
 /** The uikit component a child should attach to. Absent for layout roots. */
 export const UIKIT_PARENT: InjectionKey<UikitComponent> = Symbol('vue-xr-ui:uikit-parent')

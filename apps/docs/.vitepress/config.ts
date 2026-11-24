@@ -3,7 +3,7 @@ import { templateCompilerOptions } from '@tresjs/core'
 
 const components = [
   ['Layout', ['XrScene', 'XrPanel', 'XrWindow', 'XrDialog', 'XrBox', 'XrText']],
-  ['Controls', ['XrButton', 'XrToggle', 'XrSlider', 'XrTabs', 'XrList', 'XrTooltip']],
+  ['Controls', ['XrButton', 'XrToggle', 'XrSlider', 'XrTabs', 'XrList', 'XrSelect', 'XrTooltip']],
   ['Text input', ['XrTextField', 'XrKeyboard']],
   ['App', ['XrThemeProvider', 'XrEnterButton']],
 ] as const

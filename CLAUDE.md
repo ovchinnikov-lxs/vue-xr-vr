@@ -141,6 +141,13 @@ Re-run only the failing spec while fixing.
   origin is set; XrScene re-announces input sources when the origin changes.
 - uikit's bundled fonts are Latin only: we ship Inter with Cyrillic
   (src/fonts, built by scripts/build-fonts.mjs).
+- uikit `zIndex` also moves hit tests: every step subtracts 1 cm from the
+  pointer distance, so a fingertip "touches" a zIndex 10 element 10 cm
+  early. Draw popups on top with `renderOrder` (inherited) instead;
+  `zIndexOffset` alone lets later siblings' text show through.
+- Sphere pointers (hand grab and fingertip touch) report a `pointerdown` on
+  the void object whenever nothing is near the hand: ignore those when
+  listening for "press outside" (PRESS_HUB, XrSelect).
 - E2E: Playwright 1.56 has no Chromium for ubuntu 26.04, so the e2e job is
   pinned to ubuntu-24.04. Input profiles are served from e2e/assets.
 

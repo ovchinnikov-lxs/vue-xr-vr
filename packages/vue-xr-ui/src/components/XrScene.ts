@@ -2,8 +2,9 @@ import { defineComponent, onBeforeUnmount, provide, type PropType } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
 import { reversePainterSortStable } from '@pmndrs/uikit'
 import { createXRStore, type XRStoreOptions } from '@pmndrs/xr'
-import type { WebGLRenderer } from 'three'
-import { FRAME_HUB, XR_CONTROLLER, XR_VIEW, type FrameCallback, type FrameHub } from '../runtime/context'
+import { getVoidObject } from '@pmndrs/pointer-events'
+import type { Object3D, WebGLRenderer } from 'three'
+import { FRAME_HUB, PRESS_HUB, XR_CONTROLLER, XR_VIEW, type FrameCallback, type FrameHub, type PressHub, type ScenePointerEvent } from '../runtime/context'
 import type { InternalXrController } from '../runtime/controller'
 import { injectAppWide } from '../runtime/app-inject'
 import { injectEmulator, type EmulatorOptions } from '../runtime/emulator'
@@ -68,6 +69,28 @@ export const XrScene = defineComponent({
       },
     }
     provide(FRAME_HUB, hub)
+
+    // Presses anywhere, for popups that close on a press outside. A listener
+    // on the scene itself would make every mesh in it a pointer target, so
+    // listen on the UI roots (already targets) and on the "void" object that
+    // @pmndrs/pointer-events hits when a ray hits nothing.
+    const downListeners = new Set<(event: ScenePointerEvent) => void>()
+    const onDown = (event: unknown) => {
+      for (const cb of [...downListeners]) cb(event as ScenePointerEvent)
+    }
+    const listenOn = (object: Object3D) => {
+      object.addEventListener('pointerdown', onDown)
+      return () => object.removeEventListener('pointerdown', onDown)
+    }
+    const stopVoid = listenOn(getVoidObject(scene))
+    const presses: PressHub = {
+      addRoot: listenOn,
+      onDown(cb) {
+        downListeners.add(cb)
+        return () => downListeners.delete(cb)
+      },
+    }
+    provide(PRESS_HUB, presses)
     const viewer = () => (renderer.xr.isPresenting ? renderer.xr.getCamera() : getCamera())
     provide(XR_VIEW, {
       headPosition: (target) => viewer().getWorldPosition(target),
@@ -126,6 +149,7 @@ export const XrScene = defineComponent({
     onBeforeUnmount(() => {
       unsubscribe()
       detach()
+      stopVoid()
       if (presenting) renderer.setAnimationLoop(null)
       store.destroy()
     })
