@@ -199,6 +199,11 @@ issues:
     milestone: "0.2 Components"
     labels: [testing]
 
+  - title: "Text focus and modal stack per scene, not per page"
+    milestone: "0.3 Docs site"
+    labels: [input]
+    body: "`activeTextTarget` and XrDialog's modal stack (runtime/modal.ts) are module-level: with several canvases on a page (docs demos), an open dialog in one stops fields in the others from taking focus, and Escape goes to the newest dialog anywhere. Done when both are provided by XrScene, and a page with two scenes keeps them apart (e2e or unit test)."
+
   # ---------------- 0.3 Docs site ----------------
   - title: "Docs site skeleton: VitePress, guides, component pages, live demos, generated API tables"
     milestone: "0.3 Docs site"
