@@ -43,6 +43,14 @@ GitHub MCP tools (`actions_list` → `get_job_logs` with `failed_only`).
   them to stop before tapping. Rays need a few frames to land on a target.
 - Cover: mouse, controller ray, and for controls a hand poke
   (`scene.setInputMode('hand')`).
+- Mixed reality: `test.use({ scenePath: '/?e2e&scene=mr&room=living_room',
+  readyLabel: 'Mixed reality' })` opens `scenes/MixedReality.vue` in a
+  synthetic room (see `e2e/mr.spec.ts`). Helpers: `turnHead`, `moveHead`,
+  `recenter`, `head`, `seenAt`, `facingAngle`, `planes`, `poseHand`,
+  `renderState`. Use scanned rooms (`living_room`); the furnished ones
+  (`kitchen`) render at ~2 fps in software GL. IWER's `recenter()` moves
+  the user, not the room, so it cannot tell an anchor from a stored pose:
+  spoil the stored pose instead (see the anchors test).
 
 ## When it fails
 

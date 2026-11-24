@@ -157,6 +157,19 @@ Re-run only the failing spec while fixing.
   triangulates strokes itself (SVGLoader.pointsToStroke) into a `Content`.
 - Timers in the emulator (and on a busy headset) fire late: anything that
   repeats while held should count from the clock, not from timer ticks.
+- An XRFrame is usable only inside its frame callback. Do not `await
+  store.requestFrame()` and then use the frame: in IWER every frame
+  callback shares one task, so the await resumes after the frame ended.
+  Queue the work and do it in the next `useXrFrame` (runtime/anchors.ts).
+- Before render, three.js leaves the XR camera at the first eye's pose;
+  it moves it between the eyes only while rendering. The viewer's head is
+  `XR_VIEW.headPosition` (midpoint of the eyes), not `xr.getCamera()`.
+- In a session three.js also ticks our loop from window rAF without an
+  XRFrame (emulator, desktop Chrome with PC VR): per-frame XR code returns
+  early when `session && !frame`. Do not drop those ticks in XrScene: pokes
+  in the emulator depend on the extra pointer update (#61 tracks it).
+- Two concurrent `restorePersistentAnchor` calls for one handle fail (IWER
+  rejects the second): share one restore per handle and session (anchors.ts).
 - E2E: Playwright 1.56 has no Chromium for ubuntu 26.04, so the e2e job is
   pinned to ubuntu-24.04. Input profiles are served from e2e/assets.
 

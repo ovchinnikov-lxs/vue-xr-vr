@@ -52,7 +52,7 @@ screen with a mouse.
   to your walls and tables and stay there across sessions (persistent
   anchors), a menu on your hand.
 - **Themes**: dark and light, an accent from one colour, a theme per subtree.
-- **Tested like a user**: 33 end-to-end tests drive every control with the
+- **Tested like a user**: 76 end-to-end tests drive every control with the
   mouse, controller rays and hands in an emulated Quest 3 on every push.
 - **TypeScript**, tree-shakeable ES modules, Vue 3.5+, three.js, TresJS 5.
 
