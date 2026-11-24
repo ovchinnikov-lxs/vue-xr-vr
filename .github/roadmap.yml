@@ -162,6 +162,14 @@ issues:
     milestone: "0.2 Components"
     labels: [component]
     body: "`v-model`, options as strings or `{ label, value, description }`, opens a floating XrList above the other content, closes on choice or press outside. Works with rays and poke."
+  - title: "XrTooltip: draw the bubble over neighbouring text"
+    milestone: "0.2 Components"
+    labels: [component, bug]
+    body: "XrTooltip uses `zIndexOffset`, which only reorders panels: text of later siblings can show through the bubble (seen with XrSelect before it switched to `renderOrder`). Done when the bubble uses `renderOrder` (not `zIndex`, which shifts hit tests) and a screenshot shows it opaque over a text row."
+  - title: "Popups that escape clipping containers (XrSelect inside XrList)"
+    milestone: "0.2 Components"
+    labels: [component]
+    body: "XrSelect's list is a child of the select, so a scrolling or `overflow: hidden` ancestor clips it. Done when the list (and later other popups) can render as its own root positioned at the field, and a select inside an XrList opens fully, with e2e."
   - title: "XrNumberInput: stepper with - / + and a field"
     milestone: "0.2 Components"
     labels: [component]
