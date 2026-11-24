@@ -8,7 +8,8 @@
 | [`<XrDialog>`](./XrDialog) | Modal panel in front of the viewer, with a backdrop. |
 | [`<XrBox>`](./XrBox) | Transparent flex container. |
 | [`<XrText>`](./XrText) | Text in the theme's type scale. |
-| [`<XrButton>`](./XrButton) | Button, three variants, three sizes. |
+| [`<XrButton>`](./XrButton) | Button, three variants, three sizes, optional icon. |
+| [`<XrIcon>`](./XrIcon) | Lucide or SVG icon. |
 | [`<XrToggle>`](./XrToggle) | On/off switch. |
 | [`<XrSlider>`](./XrSlider) | Number in a range. |
 | [`<XrTabs>`](./XrTabs) | Segmented tabs. |

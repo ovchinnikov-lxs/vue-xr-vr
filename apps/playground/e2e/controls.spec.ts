@@ -20,7 +20,11 @@ test.describe('toggle and slider in the browser', () => {
 
   test('mouse drag moves the slider', async ({ scene }) => {
     await scene.mouseDrag('#volume.track', 0.4, 0.75)
-    await scene.expectText('Volume: 75')
+    // The mouse lands on whole CSS pixels: within one step of 75.
+    await expect
+      .poll(async () => Number((await scene.texts()).find((t) => t.startsWith('Volume: '))?.slice(8)))
+      .toBeGreaterThanOrEqual(74)
+    expect(Number((await scene.texts()).find((t) => t.startsWith('Volume: '))?.slice(8))).toBeLessThanOrEqual(76)
     await scene.mouseDrag('#volume.track', 0.75, 0)
     await scene.expectText('Volume: 0')
   })

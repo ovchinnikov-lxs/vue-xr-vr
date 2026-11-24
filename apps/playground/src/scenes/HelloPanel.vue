@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watchEffect } from 'vue'
 import type { Mesh } from 'three'
+import { Bell, BellOff, Heart, Share2 } from 'lucide'
 import {
   XrBox,
   XrButton,
   XrDialog,
+  XrIcon,
   XrKeyboard,
   XrPanel,
   XrSelect,
@@ -46,6 +48,11 @@ const artistOptions = [
 const shownTracks = computed(() => (artist.value ? tracks.filter((t) => t.artist === artist.value) : tracks))
 // v-model keeps where the window was put; save it to restore the layout next time.
 const windowPosition = ref<[number, number, number]>([0, 1.45, -1])
+
+// Form tab. Icons are Lucide icon nodes, imported one by one from 'lucide'.
+const liked = ref(false)
+const shares = ref(0)
+const alerts = ref(true)
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -100,13 +107,13 @@ useXrFrame((delta) => {
     <TresMeshStandardMaterial color="#4f7cff" />
   </TresMesh>
 
-  <XrWindow v-model:position="windowPosition" name="window" :width="440">
+  <XrWindow v-model:position="windowPosition" name="window" :width="480">
     <XrText variant="headline">vue-xr-ui</XrText>
     <XrText muted>
       Point a controller ray, pinch, or poke the buttons with your finger. Same click event for every input. Drag the bar below to move the window.
     </XrText>
 
-    <XrTabs v-model="tab" :tabs="['Controls', 'List', 'Type', 'Theme']" block />
+    <XrTabs v-model="tab" :tabs="['Controls', 'List', 'Form', 'Type', 'Theme']" block />
 
     <!-- The active tab's content is the window's last child (see node.ts on v-if order). -->
     <XrBox v-if="tab === 'Controls'" :gap="4">
@@ -147,6 +154,22 @@ useXrFrame((delta) => {
           @click="playing = track.title"
         />
       </XrList>
+    </XrBox>
+
+    <XrBox v-else-if="tab === 'Form'" :gap="4">
+      <XrPanel variant="sunken" direction="row" align="center" :padding="3" :gap="2">
+        <XrButton name="like" variant="ghost" :icon="Heart" :ui="liked ? { color: '#f43f5e' } : {}" @click="liked = !liked" />
+        <XrButton name="alerts" variant="ghost" :icon="alerts ? Bell : BellOff" @click="alerts = !alerts" />
+        <XrButton name="share" variant="secondary" size="sm" :icon="Share2" label="Share" @click="shares++" />
+        <XrBox direction="column" align="flex-end" :grow="1">
+          <XrBox direction="row" align="center" :gap="1">
+            <XrIcon :icon="Heart" :size="16" muted />
+            <XrText variant="caption" muted>{{ liked ? 'Liked' : 'Not liked' }}</XrText>
+          </XrBox>
+          <XrText variant="caption" muted>{{ alerts ? 'Alerts on' : 'Alerts off' }}</XrText>
+          <XrText variant="caption" muted>Shares: {{ shares }}</XrText>
+        </XrBox>
+      </XrPanel>
     </XrBox>
 
     <XrBox v-else-if="tab === 'Type'" :gap="3">

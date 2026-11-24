@@ -40,13 +40,14 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@vue-xr-ui/tokens": "workspace:*",
+    "@iwer/devui": "^2.6.0",
+    "@iwer/sem": "^2.6.0",
+    "@pmndrs/pointer-events": "^6.6.32",
     "@pmndrs/uikit": "^1.0.77",
     "@pmndrs/xr": "^6.6.32",
-    "@pmndrs/pointer-events": "^6.6.32",
-    "iwer": "^2.6.0",
-    "@iwer/devui": "^2.6.0",
-    "@iwer/sem": "^2.6.0"
+    "@preact/signals-core": "^1.14.4",
+    "@vue-xr-ui/tokens": "workspace:*",
+    "iwer": "^2.6.0"
   },
   "peerDependencies": {
     "@tresjs/core": "^5.9.0",
@@ -58,8 +59,8 @@
     "@types/three": "^0.186.0",
     "@types/webxr": "^0.5.24",
     "three": "^0.186.1",
-    "vue": "^3.5.44",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vue": "^3.5.44"
   },
   "publishConfig": {
     "access": "public",
