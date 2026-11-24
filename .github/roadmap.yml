@@ -296,6 +296,12 @@ issues:
   - title: "Accessibility: focus order, labels, reduced motion, readable contrast"
     milestone: "1.0 Release"
     labels: [input]
+  - title: "XR loop ticks and renders twice per frame where window rAF keeps running (PC VR, emulator)"
+    milestone: "1.0 Release"
+    labels: [perf, bug]
+    body: |
+      three.js setAnimationLoop also restarts its window-rAF loop, so where window rAF runs during a session (desktop Chrome + PC VR, IWER) XrScene ticks and renders twice per frame, once without an XRFrame. Skipping those ticks broke hand pokes in the emulator.
+      Done when: one tick per XR frame on PC VR, pokes still pass in the emulator, frame time measured before/after.
   - title: "Switch npm publishing to trusted publishing (OIDC), no token"
     milestone: "1.0 Release"
     labels: [release]
