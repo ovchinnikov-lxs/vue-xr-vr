@@ -86,8 +86,12 @@ export const XrSelect = defineComponent({
     const selected = computed(() => options.value.find((o) => o.value === props.modelValue))
 
     let stopListening: (() => void) | undefined
+    // Capture phase, and stop it: one Escape closes the list, not also the
+    // XrDialog the select is in (its listener is on the same window).
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key !== 'Escape') return
+      event.stopImmediatePropagation()
+      setOpen(false)
     }
     const setOpen = (open: boolean) => {
       if (open === isOpen.value || (open && props.disabled)) return
@@ -96,10 +100,10 @@ export const XrSelect = defineComponent({
       stopListening = undefined
       if (open) {
         const stopDown = presses?.onDown(onSceneDown)
-        if (typeof window !== 'undefined') window.addEventListener('keydown', onKey)
+        if (typeof window !== 'undefined') window.addEventListener('keydown', onKey, true)
         stopListening = () => {
           stopDown?.()
-          if (typeof window !== 'undefined') window.removeEventListener('keydown', onKey)
+          if (typeof window !== 'undefined') window.removeEventListener('keydown', onKey, true)
         }
         emit('open')
       } else {
@@ -139,6 +143,7 @@ export const XrSelect = defineComponent({
       placement: () => props.placement,
       gap: () => theme.value.space[2]!,
       lift: () => theme.value.space[2]!,
+      onAnchorHidden: () => setOpen(false),
     })
 
     const press = usePress({ disabled: () => props.disabled, onPress: () => setOpen(!isOpen.value) })

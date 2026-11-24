@@ -51,18 +51,27 @@ export const XrProgress = defineComponent({
   setup(props) {
     const theme = useXrTheme()
     const fraction = computed(() => (props.max > 0 ? Math.min(1, Math.max(0, props.value / props.max)) : 0))
-    const animated = () => props.variant === 'spinner' || props.indeterminate
 
-    // Time only advances while something moves, so a determinate bar never re-renders per frame.
+    // The spinner reads `time` through a step (a re-render eight times a
+    // second); the indeterminate bar never re-renders for it: its segment
+    // is moved by a transform set straight on the node, which needs no
+    // relayout and no Vue render.
     const time = ref(0)
+    let sweep = 0
     useXrFrame((delta) => {
-      if (animated()) time.value += delta
+      if (props.variant === 'spinner') time.value += delta
+      else if (props.indeterminate) {
+        sweep = (sweep + delta) % SWEEP_MS
+        const fill = node.getObjectByName('fill') as Container | undefined
+        const width = fill?.parentContainer.value?.size.value?.[0]
+        if (fill && width) fill.setProperties({ transformTranslateX: ((sweep / SWEEP_MS) * (1 + SEGMENT) - SEGMENT) * width } as never)
+      }
     })
 
     // Re-renders only when the spinner moves a step, not every frame.
     const spinnerStep = computed(() => Math.floor(time.value / STEP_MS) % DOTS)
 
-    const { render } = useUikitNode(
+    const { node, render } = useUikitNode(
       (initial) => new Container(initial),
       () => ({
         flexDirection: props.variant === 'spinner' ? 'row' : 'column',
@@ -80,9 +89,8 @@ export const XrProgress = defineComponent({
       const thickness = props.size ?? 8
       let fill: Record<string, unknown>
       if (props.indeterminate) {
-        // Enters from the left edge and leaves past the right one.
-        const phase = (time.value % SWEEP_MS) / SWEEP_MS
-        fill = { positionType: 'absolute', positionTop: 0, width: `${SEGMENT * 100}%`, positionLeft: `${(phase * (1 + SEGMENT) - SEGMENT) * 100}%` }
+        // Moved across the track every frame (see the frame callback above).
+        fill = { positionType: 'absolute', positionTop: 0, positionLeft: 0, width: `${SEGMENT * 100}%`, transformTranslateX: -10000 }
       } else {
         fill = { width: `${fraction.value * 100}%`, display: fraction.value > 0 ? 'flex' : 'none' }
       }

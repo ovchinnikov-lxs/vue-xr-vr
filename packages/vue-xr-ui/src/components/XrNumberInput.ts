@@ -124,6 +124,8 @@ export const XrNumberInput = defineComponent({
       onBeforeUnmount(stop)
       return usePress({
         disabled: () => props.disabled || blocked(),
+        // Sliding off while held is not a hold: stop stepping.
+        cancelAfter: 0.02,
         onDown: () => {
           repeated = false
           stop()

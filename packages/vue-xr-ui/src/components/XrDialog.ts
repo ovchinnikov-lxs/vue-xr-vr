@@ -4,7 +4,7 @@ import { Vector3 } from 'three'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
 import { XR_VIEW } from '../runtime/context'
-import { closeModal, modalStack, openModal, type FocusReturn } from '../runtime/modal'
+import { closeModal, modalStack, openModal } from '../runtime/modal'
 import { useUikitNode } from '../runtime/node'
 import { usePress, type ControlPointerEvent } from '../runtime/press'
 import { XrBox } from './XrBox'
@@ -160,21 +160,19 @@ export const XrDialog = defineComponent({
       node.position.copy(local)
       node.rotation.set(0, Math.atan2(localHead.x - local.x, localHead.z - local.z), 0)
     }
-    let focusReturn: FocusReturn | undefined
     watch(
       () => props.open,
       (open) => {
         if (open) {
           depth.value = modalStack.value.filter((n) => n !== node).length
-          focusReturn = openModal(node)
+          openModal(node)
         } else {
-          closeModal(node, focusReturn)
-          focusReturn = undefined
+          closeModal(node)
         }
       },
       { immediate: true },
     )
-    onBeforeUnmount(() => closeModal(node, focusReturn))
+    onBeforeUnmount(() => closeModal(node))
 
     watch(
       () => [props.open, props.position?.join(), props.distance] as const,

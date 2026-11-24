@@ -51,6 +51,7 @@ const RadioOption = defineComponent({
           alignItems: 'center',
           gap: t.space[3],
           minHeight: t.interaction.minTarget,
+          minWidth: t.interaction.minTarget,
           paddingX: t.space[1],
           paddingY: t.space[1],
           borderRadius: t.radius.md,

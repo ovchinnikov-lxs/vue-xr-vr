@@ -79,8 +79,8 @@ test.describe('text field and keyboard in the browser', () => {
     const key = await scene.screenPoint('#key-backspace')
     await page.mouse.move(key.x, key.y)
     await page.mouse.down()
-    await page.waitForTimeout(100)
-    expect((await scene.inputState(field)).value).toBe('hello worl')
+    // One character goes on the press; on a slow CI frame the press itself lands a little later.
+    await expect.poll(async () => (await scene.inputState(field)).value, { intervals: [20] }).toBe('hello worl')
     await expect.poll(async () => (await scene.inputState(field)).value.length).toBeLessThan(8)
     await page.mouse.up()
     // The release reaches the scene on its next frame; a slow machine can repeat once more before that.

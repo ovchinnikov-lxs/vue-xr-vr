@@ -60,7 +60,9 @@ export const XrCheckbox = defineComponent({
           flexDirection: 'row',
           alignItems: 'center',
           gap: t.space[3],
+          // A box with no label is still a full-size target.
           minHeight: t.interaction.minTarget,
+          minWidth: t.interaction.minTarget,
           paddingX: t.space[1],
           borderRadius: t.radius.md,
           cursor: props.disabled ? 'not-allowed' : 'pointer',

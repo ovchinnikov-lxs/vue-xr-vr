@@ -134,7 +134,7 @@ test.describe('progress in the browser', () => {
     const lefts = new Set<unknown>()
     for (let i = 0; i < 6; i++) {
       angles.add(await scene.property('#spinner.ring', 'transformRotateZ'))
-      lefts.add(await scene.property('#loading.fill', 'positionLeft'))
+      lefts.add(await scene.property('#loading.fill', 'transformTranslateX'))
       await scene.page.waitForTimeout(120)
     }
     expect(angles.size).toBeGreaterThan(2)
@@ -151,8 +151,8 @@ test.describe('progress in the emulated Quest 3', () => {
 
   test('keeps animating in a session, and the bar follows a ray press', async ({ scene }) => {
     await openForm(scene, (l) => scene.rayClick('right', l))
-    const first = await scene.property('#loading.fill', 'positionLeft')
-    await expect.poll(() => scene.property('#loading.fill', 'positionLeft')).not.toBe(first)
+    const first = await scene.property('#loading.fill', 'transformTranslateX')
+    await expect.poll(() => scene.property('#loading.fill', 'transformTranslateX')).not.toBe(first)
     await scene.rayClick('right', '+25%')
     await scene.expectText('25%')
   })
@@ -231,6 +231,16 @@ test.describe('select inside a scrolling list', () => {
     await scene.click('#scene-Kitchen-popup.option-Bright')
     await scene.expectText('Kitchen: Bright')
     await expect.poll(() => scene.isShown('#scene-Kitchen-popup.options')).toBe(false)
+  })
+
+  test('scrolling its field out of the list closes it', async ({ scene, page }) => {
+    await openForm(scene, (l) => scene.click(l))
+    await scene.click('#scene-Hall.trigger')
+    await expect.poll(() => scene.isShown('#scene-Hall-popup.options')).toBe(true)
+    const p = await scene.screenPoint('#room-scenes', 0.15)
+    await page.mouse.move(p.x, p.y)
+    await page.mouse.wheel(0, 600)
+    await expect.poll(() => scene.isShown('#scene-Hall-popup.options')).toBe(false)
   })
 })
 

@@ -17,7 +17,7 @@ export type XrIconNode = ReadonlyArray<readonly [tag: string, attrs: Readonly<Re
 export type XrIconSource = XrIconNode | string
 
 interface Parsed {
-  mesh: Mesh
+  geometry: BufferGeometry
   center: Vector3
   size: Vector3
 }
@@ -76,9 +76,6 @@ function parse(svg: string): Parsed | undefined {
   })
   const geometry = mergeGeometries(flat)
   flat.forEach((g) => g.dispose())
-  const mesh = new Mesh(geometry, new MeshBasicMaterial({ side: DoubleSide, toneMapped: false }))
-  // SVG's y axis points down.
-  mesh.scale.y = -1
 
   // Typed as the document, but three returns its root <svg> element.
   const root = data.xml as unknown as Element
@@ -95,7 +92,25 @@ function parse(svg: string): Parsed | undefined {
     center = new Vector3((b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, 0)
     size = new Vector3(Math.max(b.max.x - b.min.x, 1e-6), Math.max(b.max.y - b.min.y, 1e-6), 0.00001)
   }
-  return { mesh, center, size }
+  return { geometry, center, size }
+}
+
+/**
+ * Parsed icons, shared: thirty checked checkboxes triangulate the check once
+ * and share one geometry buffer (each keeps its own material, for colour).
+ */
+const cache = new Map<string, { parsed: Parsed | undefined; refs: number }>()
+function acquire(svg: string): Parsed | undefined {
+  let entry = cache.get(svg)
+  if (!entry) cache.set(svg, (entry = { parsed: parse(svg), refs: 0 }))
+  entry.refs++
+  return entry.parsed
+}
+function release(svg: string) {
+  const entry = cache.get(svg)
+  if (!entry || --entry.refs > 0) return
+  entry.parsed?.geometry.dispose()
+  cache.delete(svg)
 }
 
 /**
@@ -147,26 +162,31 @@ export const XrIcon = defineComponent({
       }),
     )
 
-    let current: Mesh | undefined
+    let current: { mesh: Mesh; svg: string } | undefined
     const clear = () => {
       if (!current) return
-      node.remove(current)
-      current.geometry.dispose()
-      ;(current.material as MeshBasicMaterial).dispose()
+      node.remove(current.mesh)
+      ;(current.mesh.material as MeshBasicMaterial).dispose()
+      release(current.svg)
       current = undefined
     }
     watch(
       () => toSvg(props.icon, props.strokeWidth),
       (svg) => {
         clear()
-        const parsed = parse(svg)
+        // SVGLoader needs DOMParser: nothing to draw during SSR anyway.
+        const parsed = typeof DOMParser === 'undefined' ? undefined : acquire(svg)
         if (!parsed) {
+          if (typeof DOMParser !== 'undefined') release(svg)
           boundingBox.value = undefined
           return
         }
-        current = markRaw(parsed.mesh)
+        const mesh = markRaw(new Mesh(parsed.geometry, new MeshBasicMaterial({ side: DoubleSide, toneMapped: false })))
+        // SVG's y axis points down.
+        mesh.scale.y = -1
+        current = { mesh, svg }
         boundingBox.value = { center: parsed.center, size: parsed.size }
-        node.addUnsafe(current)
+        node.addUnsafe(mesh)
         // Gives the mesh the component's colour, clipping and draw order.
         node.notifyAncestorsChanged()
       },

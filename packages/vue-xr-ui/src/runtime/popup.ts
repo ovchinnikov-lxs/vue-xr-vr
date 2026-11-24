@@ -27,36 +27,52 @@ export function layoutRootOf(component: UikitComponent): UikitComponent {
  */
 export function usePopupLayer(
   anchor: UikitComponent,
-  options: { open: () => boolean; placement: () => 'top' | 'bottom'; gap: () => number; lift: () => number },
+  options: {
+    open: () => boolean
+    placement: () => 'top' | 'bottom'
+    gap: () => number
+    lift: () => number
+    /** The anchor stopped being shown while open (scrolled out, its dialog or tab hidden). */
+    onAnchorHidden?: () => void
+  },
 ) {
   const frames = inject(FRAME_HUB, undefined)
   const presses = inject(PRESS_HUB, undefined)
   const root = markRaw(
     new Container({ ...ROOT_DEFAULTS, flexDirection: 'column', renderOrder: 1, pointerEventsOrder: 1, display: 'none' } as never),
   )
-  let last = ''
+  let shown = false
+  let lastTop: boolean | undefined
+  let lastWidth = 0
+  let lastPixelSize = 0
+  let lastGap = 0
 
   const follow = (delta: number) => {
-    // Findable like the anchor: `scene.getObjectByName('<name>-popup')`.
-    root.name = anchor.name ? `${anchor.name}-popup` : 'popup'
-    const open = options.open()
     const base = layoutRootOf(anchor)
     const size = anchor.size.value
     const panel = anchor.globalPanelMatrix.value
     const parent = base.parent
+    let open = options.open()
+    if (open && (!anchor.isVisible.value || anchor.isClipped.value)) {
+      options.onAnchorHidden?.()
+      open = false
+    }
     if (!open || !size || !panel || !parent) {
-      if (last !== 'closed') root.setProperties({ display: 'none' } as never)
-      last = 'closed'
+      if (shown) root.setProperties({ display: 'none' } as never)
+      shown = false
       root.update(delta)
       return
+    }
+    if (!shown) {
+      // Findable like the anchor: `scene.getObjectByName('<name>-popup')`.
+      root.name = anchor.name ? `${anchor.name}-popup` : 'popup'
     }
     if (root.parent !== parent) parent.add(root)
     const top = options.placement() === 'top'
     const pixelSize = (base.properties.value as { pixelSize?: number }).pixelSize ?? 0.01
     const gap = options.gap()
     // Only touch uikit properties when they change: a reset re-runs layout.
-    const key = `${top}|${size[0]}|${pixelSize}|${gap}`
-    if (key !== last) {
+    if (!shown || top !== lastTop || size[0] !== lastWidth || pixelSize !== lastPixelSize || gap !== lastGap) {
       root.setProperties({
         display: 'flex',
         width: size[0],
@@ -66,7 +82,11 @@ export function usePopupLayer(
         paddingTop: top ? 0 : gap,
         paddingBottom: top ? gap : 0,
       } as never)
-      last = key
+      shown = true
+      lastTop = top
+      lastWidth = size[0]
+      lastPixelSize = pixelSize
+      lastGap = gap
     }
     // The anchor's panel corner in the parent's space: the base root's own
     // placement (uikit keeps the panel transform out of position/rotation)

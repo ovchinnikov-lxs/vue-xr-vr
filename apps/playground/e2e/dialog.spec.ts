@@ -129,6 +129,21 @@ test.describe('dialog focus and stacking', () => {
     await expect.poll(async () => (await scene.inputState('#message')).value).toBe('hiq')
   })
 
+  test('a field inside a closed dialog does not keep the focus', async ({ scene, page }) => {
+    await scene.click('Type')
+    await scene.click('#clear')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(true)
+    await scene.click('#note')
+    await expect.poll(async () => (await scene.inputState('#note')).focused).toBe(true)
+    await page.keyboard.press('Escape')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(false)
+    await expect.poll(async () => (await scene.inputState('#note')).focused).toBe(false)
+    // The on-screen keyboard has no target now: it types nowhere.
+    await scene.click('#key-q')
+    await page.waitForTimeout(200)
+    expect((await scene.inputState('#note')).value).toBe('')
+  })
+
   test('a dialog over a dialog opens in front, and Escape closes only the topmost', async ({ scene, page }) => {
     await scene.click('Type')
     await scene.click('#clear')
