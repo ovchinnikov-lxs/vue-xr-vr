@@ -11,6 +11,8 @@
 | [`<XrButton>`](./XrButton) | Button, three variants, three sizes, optional icon. |
 | [`<XrIcon>`](./XrIcon) | Lucide or SVG icon. |
 | [`<XrToggle>`](./XrToggle) | On/off switch. |
+| [`<XrCheckbox>`](./XrCheckbox) | Checkbox, with an indeterminate state. |
+| [`<XrRadioGroup>`](./XrRadioGroup) | One choice out of a few, all shown. |
 | [`<XrSlider>`](./XrSlider) | Number in a range. |
 | [`<XrTabs>`](./XrTabs) | Segmented tabs. |
 | [`<XrList>`](./XrList) | Scrolling list with items. |

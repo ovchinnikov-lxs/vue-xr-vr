@@ -5,10 +5,12 @@ import { Bell, BellOff, Heart, Share2 } from 'lucide'
 import {
   XrBox,
   XrButton,
+  XrCheckbox,
   XrDialog,
   XrIcon,
   XrKeyboard,
   XrPanel,
+  XrRadioGroup,
   XrSelect,
   XrSlider,
   XrText,
@@ -53,6 +55,12 @@ const windowPosition = ref<[number, number, number]>([0, 1.45, -1])
 const liked = ref(false)
 const shares = ref(0)
 const alerts = ref(true)
+// A parent checkbox shows a dash while only some rooms are on.
+const rooms = ref<Record<string, boolean>>({ Kitchen: true, Bedroom: false })
+const allRooms = computed(() => Object.values(rooms.value).every(Boolean))
+const someRooms = computed(() => !allRooms.value && Object.values(rooms.value).some(Boolean))
+const setAllRooms = (on: boolean) => Object.keys(rooms.value).forEach((room) => (rooms.value[room] = on))
+const quality = ref('High')
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -170,6 +178,17 @@ useXrFrame((delta) => {
           <XrText variant="caption" muted>Shares: {{ shares }}</XrText>
         </XrBox>
       </XrPanel>
+
+      <XrBox direction="row" :gap="4">
+        <XrBox :grow="1">
+          <XrCheckbox name="all-rooms" :model-value="allRooms" :indeterminate="someRooms" @update:model-value="setAllRooms">All rooms</XrCheckbox>
+          <XrCheckbox v-for="(_, room) in rooms" :key="room" v-model="rooms[room]" :name="`room-${room}`" :label="room" :ui="{ marginLeft: 24 }" />
+        </XrBox>
+        <XrBox :grow="1">
+          <XrText variant="caption" muted>Quality: {{ quality }}</XrText>
+          <XrRadioGroup v-model="quality" name="quality" :options="['Low', 'Medium', 'High']" />
+        </XrBox>
+      </XrBox>
     </XrBox>
 
     <XrBox v-else-if="tab === 'Type'" :gap="3">

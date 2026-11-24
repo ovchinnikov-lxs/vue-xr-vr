@@ -116,6 +116,8 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`, `icon` (icon-only buttons are round). |
 | `<XrIcon>` | A [Lucide](https://lucide.dev) icon node (`import { Heart } from 'lucide'`) or an SVG string, in the surrounding text colour. Outlines are triangulated, so Lucide works. |
 | `<XrToggle>` | On/off switch with a label, `v-model`. |
+| `<XrCheckbox>` | Checkbox with a label, `v-model`, `indeterminate`. |
+| `<XrRadioGroup>` | One of a few options, all shown: `v-model`, `options` as strings or `{ label, value, description, disabled }`, `direction`. |
 | `<XrSlider>` | Number in a range, `v-model`, `min` / `max` / `step`. Drag with a ray or slide a fingertip along it. |
 | `<XrTabs>` | Segmented tabs, `v-model`. Switches a value; show the content with `v-if`. |
 | `<XrList>` / `<XrListItem>` | Scrolling list (drag with a ray or finger, mouse wheel); items have label, description, `selected`. A drag never selects. |
