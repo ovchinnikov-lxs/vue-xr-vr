@@ -1,6 +1,6 @@
 {
   "name": "@vue-xr-ui/tokens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Design tokens and themes for vue-xr-ui (framework-agnostic).",
   "type": "module",
   "license": "MIT",
