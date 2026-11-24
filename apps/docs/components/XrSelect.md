@@ -44,7 +44,7 @@ It closes, emitting `close`, on:
 
 Presses on your own three.js objects (a mesh with `@click`) are not seen and leave it open. A hand's pinch is a press of its ray, wherever the ray points; a fingertip closes it when it pokes other UI.
 
-The list is part of the panel the select is in, so a container that clips (an `XrList`, anything with `overflow: hidden` or `scroll`) clips it too. Put the select outside scrolling content.
+The list is a layout root of its own that follows the field every frame (it is named `<name>-popup` after the select), so a container that clips the select (an `XrList`, anything with `overflow: hidden` or `scroll`) does not clip the list: a select in a row of a scrolling settings list opens fully. Options are named `option-<value>`.
 
 `open()` and `close()` are exposed on the component's ref.
 

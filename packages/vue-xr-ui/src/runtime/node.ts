@@ -16,7 +16,7 @@ type Properties = Record<string, unknown>
  * `fontFamilies`: Inter with Cyrillic (see fonts.ts). A root can still set
  * its own through its properties.
  */
-const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' }, fontFamilies: defaultFontFamilies }
+export const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' }, fontFamilies: defaultFontFamilies }
 
 /**
  * Binds one uikit component to the lifetime of a Vue component.

@@ -4,6 +4,7 @@ import type { Object3D } from 'three'
 import { useXrTheme } from '../composables/useXrTheme'
 import { PRESS_HUB, type ScenePointerEvent } from '../runtime/context'
 import { useUikitNode } from '../runtime/node'
+import { usePopupLayer } from '../runtime/popup'
 import { usePress } from '../runtime/press'
 import { XrBox } from './XrBox'
 import { XrList, XrListItem } from './XrList'
@@ -44,7 +45,9 @@ const normalize = (option: string | XrSelectOption): XrSelectOption =>
  * fingertip. It closes on a choice, on a press on the field again, on
  * Escape, and on a press anywhere outside it (other vue-xr-ui UI or empty
  * space). A press outside that lands on another control also presses it.
- * The list scrolls when it is taller than `maxHeight`.
+ * The list scrolls when it is taller than `maxHeight`. It is a layout root
+ * of its own that follows the field, so a scrolling or clipping container
+ * around the select (an XrList) does not cut it off.
  */
 export const XrSelect = defineComponent({
   name: 'XrSelect',
@@ -127,9 +130,16 @@ export const XrSelect = defineComponent({
     // sphere press on something is a press outside.
     const onSceneDown = (event: ScenePointerEvent) => {
       if (event.details?.type === 'sphere' && (event.object as { isVoidObject?: boolean } | undefined)?.isVoidObject) return
-      for (let o: Object3D | null | undefined = event.object; o; o = o.parent) if (o === node) return
+      for (let o: Object3D | null | undefined = event.object; o; o = o.parent) if (o === node || o === popup.root) return
       setOpen(false)
     }
+
+    const popup = usePopupLayer(node, {
+      open: () => isOpen.value,
+      placement: () => props.placement,
+      gap: () => theme.value.space[2]!,
+      lift: () => theme.value.space[2]!,
+    })
 
     const press = usePress({ disabled: () => props.disabled, onPress: () => setOpen(!isOpen.value) })
 
@@ -206,28 +216,17 @@ export const XrSelect = defineComponent({
           variant: 'raised',
           padding: 2,
           gap: 1,
-          ui: {
-            positionType: 'absolute',
-            positionLeft: 0,
-            positionRight: 0,
-            ...(props.placement === 'top'
-              ? { positionBottom: '100%', marginBottom: gap }
-              : { positionTop: '100%', marginTop: gap }),
-            // Hidden rather than unmounted: no pointer reaches it, and the
-            // list keeps its scroll position.
-            display: open ? 'flex' : 'none',
-            // Over the content around it: drawn after it, a little closer to
-            // the viewer, and first in line for a pointer when they overlap.
-            renderOrder: 1,
-            transformTranslateZ: gap,
-            pointerEventsOrder: 1,
-          },
+          // Its own root (see usePopupLayer) is drawn over the content
+          // around it, a little closer to the viewer, and first in line for
+          // a pointer. Hidden rather than unmounted: it keeps its scroll position.
+          ui: { alignSelf: 'stretch', display: open ? 'flex' : 'none' },
         },
         () =>
           h(XrList, { maxHeight: props.maxHeight, gap: 1 }, () =>
             options.value.map((option) =>
               h(XrListItem, {
                 key: `${typeof option.value}:${option.value}`,
+                name: `option-${option.value}`,
                 label: option.label,
                 description: option.description,
                 selected: option.value === props.modelValue,
@@ -238,7 +237,7 @@ export const XrSelect = defineComponent({
           ),
       )
 
-      return render([trigger, list])
+      return render([trigger, h(popup.Portal, { root: popup.root }, () => [list])])
     }
   },
 })

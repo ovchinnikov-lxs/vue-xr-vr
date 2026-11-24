@@ -4,7 +4,10 @@ import { expect, test, type Scene } from './fixtures'
 // below it, and its options open over that track list. Choosing a track
 // would say "Playing: …" instead of "Pick a track".
 
-const options = '#artist.options'
+// The list is a root of its own, named after the select.
+const options = '#artist-popup.options'
+// Track rows repeat the artist names: aim at the options by name ("All artists" has the value '').
+const option = (value: string) => `#artist-popup.option-${value}`
 
 async function openSelect(scene: Scene, press: (label: string) => Promise<void>) {
   await press('List')
@@ -26,12 +29,12 @@ test.describe('select in the browser', () => {
   test('mouse: open, choose an option over the list behind it', async ({ scene }) => {
     await openSelect(scene, (l) => scene.click(l))
     // Options are laid out from the top: Night Ferry sits over the tracks.
-    await scene.click('Night Ferry')
+    await scene.click(option('Night Ferry'))
     await expectChosen(scene, 'Night Ferry', 'Track 2', 'Track 1')
 
     await scene.click('#artist.trigger')
     await expect.poll(() => scene.isShown(options)).toBe(true)
-    await scene.click('All artists')
+    await scene.click(option(''))
     await expectChosen(scene, 'All artists', 'Track 1')
   })
 
@@ -68,19 +71,21 @@ test.describe('select in the emulated Quest 3', () => {
 
   test('controller ray opens it, chooses, and a press outside closes it', async ({ scene }) => {
     await openSelect(scene, (l) => scene.rayClick('right', l))
-    await scene.rayClick('right', 'Glasshouse')
+    await scene.rayClick('right', option('Glasshouse'))
     await expectChosen(scene, 'Glasshouse', 'Track 3', 'Track 1')
 
     await scene.rayClick('right', '#artist.trigger')
     await expect.poll(() => scene.isShown(options)).toBe(true)
-    await scene.rayClick('right', 'Pick a track')
+    // Other UI (the active tab: pressing it changes nothing else). Not the
+    // tab content around the select: its centre lies under the open list.
+    await scene.rayClick('right', 'List')
     await expect.poll(() => scene.isShown(options)).toBe(false)
   })
 
   test('a fingertip opens it, chooses, and a poke outside closes it', async ({ scene }) => {
     await scene.setInputMode('hand')
     await openSelect(scene, (l) => scene.poke('right', l))
-    await scene.poke('right', 'Night Ferry')
+    await scene.poke('right', option('Night Ferry'))
     await expectChosen(scene, 'Night Ferry', 'Track 2', 'Track 1')
 
     // Pulling the finger back after opening must not close it.

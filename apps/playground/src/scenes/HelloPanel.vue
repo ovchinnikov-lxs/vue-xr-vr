@@ -65,6 +65,8 @@ const setAllRooms = (on: boolean) => Object.keys(rooms.value).forEach((room) => 
 const quality = ref('High')
 const synced = ref(0)
 const guests = ref(2)
+// Selects inside a scrolling list: their options open past its clipped edge.
+const roomScenes = ref<Record<string, string>>({ Hall: 'Off', Kitchen: 'Dim', Bedroom: 'Off', Office: 'Bright' })
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -207,6 +209,13 @@ useXrFrame((delta) => {
         <XrText variant="label">Guests: {{ guests }}</XrText>
         <XrNumberInput v-model="guests" name="guests" :min="1" :max="8" :ui="{ flexGrow: 1 }" />
       </XrBox>
+
+      <XrList name="room-scenes" :max-height="124" :gap="2">
+        <XrBox v-for="(_, room) in roomScenes" :key="room" direction="row" align="center" :gap="3" :ui="{ flexShrink: 0 }">
+          <XrText variant="label" :ui="{ width: 150 }">{{ room }}: {{ roomScenes[room] }}</XrText>
+          <XrSelect v-model="roomScenes[room]" :name="`scene-${room}`" :options="['Off', 'Dim', 'Bright']" :ui="{ flexGrow: 1 }" />
+        </XrBox>
+      </XrList>
 
       <XrPanel variant="sunken" :padding="4" :gap="3">
         <XrProgress name="sync" :value="synced" label="Sync" show-value />

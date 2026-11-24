@@ -216,3 +216,36 @@ test.describe('number input in the emulated Quest 3', () => {
     await expect.poll(async () => Number((await scene.texts()).find((t) => t.startsWith('Guests: '))?.slice(8))).toBeGreaterThanOrEqual(2)
   })
 })
+
+// #room-scenes: a scrolling XrList (124 dmm tall) of rows with an XrSelect
+// each (#scene-<Room>: Off / Dim / Bright). The list clips its rows, but not
+// the selects' options, which are roots of their own.
+
+test.describe('select inside a scrolling list', () => {
+  test('its options open past the list edge and can be chosen there', async ({ scene }) => {
+    await openForm(scene, (l) => scene.click(l))
+    await scene.click('#scene-Kitchen.trigger')
+    await expect.poll(() => scene.isShown('#scene-Kitchen-popup.options')).toBe(true)
+    // "Bright" is below the list's bottom edge (-0.5): clipped if it were a child.
+    expect(await scene.inViewAt('#scene-Kitchen-popup.options', '#room-scenes')).toBeLessThan(-0.5)
+    await scene.click('#scene-Kitchen-popup.option-Bright')
+    await scene.expectText('Kitchen: Bright')
+    await expect.poll(() => scene.isShown('#scene-Kitchen-popup.options')).toBe(false)
+  })
+})
+
+test.describe('select inside a scrolling list in the emulated Quest 3', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+  })
+
+  test('a ray chooses an option outside the list', async ({ scene }) => {
+    await openForm(scene, (l) => scene.rayClick('right', l))
+    await scene.rayClick('right', '#scene-Kitchen.trigger')
+    await expect.poll(() => scene.isShown('#scene-Kitchen-popup.options')).toBe(true)
+    await scene.rayClick('right', '#scene-Kitchen-popup.option-Bright')
+    await scene.expectText('Kitchen: Bright')
+  })
+})
