@@ -119,6 +119,7 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrCheckbox>` | Checkbox with a label, `v-model`, `indeterminate`. |
 | `<XrRadioGroup>` | One of a few options, all shown: `v-model`, `options` as strings or `{ label, value, description, disabled }`, `direction`. |
 | `<XrSlider>` | Number in a range, `v-model`, `min` / `max` / `step`. Drag with a ray or slide a fingertip along it. |
+| `<XrProgress>` | Progress bar (`value` / `max`, `label`, `showValue`), `indeterminate` sweep, or `variant="spinner"`. Animates in the headset. |
 | `<XrTabs>` | Segmented tabs, `v-model`. Switches a value; show the content with `v-if`. |
 | `<XrList>` / `<XrListItem>` | Scrolling list (drag with a ray or finger, mouse wheel); items have label, description, `selected`. A drag never selects. |
 | `<XrSelect>` | Dropdown, `v-model`. `options` as strings or `{ label, value, description, disabled }`, `placeholder`, `placement`, `maxHeight`. The list floats over the content around it and closes on a choice, the field, Escape or a press outside. |

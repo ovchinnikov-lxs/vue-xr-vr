@@ -204,6 +204,8 @@ export default defineComponent({
         return { value: input.currentSignal.value, focused: input.hasFocus.value, selection: input.selectionRange.value }
       },
       /** A component's resolved background colour. */
+      /** A uikit property of a label's component, as uikit resolved it (JSON-safe values only). */
+      property: (label: string, key: string) => (targetFor(label).properties.value as Record<string, unknown>)[key] ?? null,
       background: (label: string) => String((targetFor(label).properties.value as { backgroundColor?: unknown }).backgroundColor ?? ''),
       /** CSS pixel position of a point on a label's component (see worldPoint) on the 2D canvas. */
       screenPoint(label: string, fx = 0.5) {

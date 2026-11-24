@@ -16,6 +16,7 @@ interface XrTest {
   size(label: string): [number, number] | null
   inputState(label: string): { value: string; focused: boolean; selection?: [number, number] }
   background(label: string): string
+  property(label: string, key: string): unknown
   screenPoint(label: string, fx?: number): { x: number; y: number }
   setInputMode(mode: 'controller' | 'hand'): Promise<void>
   aim(hand: Hand, label: string, fx?: number): void
@@ -80,6 +81,11 @@ export class Scene {
 
   background(label: string) {
     return this.page.evaluate((l) => window.__xrTest!.background(l), label)
+  }
+
+  /** A uikit property of a label's component (`transformRotateZ`, `positionLeft`…). */
+  property(label: string, key: string) {
+    return this.page.evaluate(([l, k]) => window.__xrTest!.property(l, k), [label, key] as const)
   }
 
   recordEvents(label: string) {

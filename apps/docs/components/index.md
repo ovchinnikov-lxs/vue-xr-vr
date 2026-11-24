@@ -14,6 +14,7 @@
 | [`<XrCheckbox>`](./XrCheckbox) | Checkbox, with an indeterminate state. |
 | [`<XrRadioGroup>`](./XrRadioGroup) | One choice out of a few, all shown. |
 | [`<XrSlider>`](./XrSlider) | Number in a range. |
+| [`<XrProgress>`](./XrProgress) | Progress bar and spinner. |
 | [`<XrTabs>`](./XrTabs) | Segmented tabs. |
 | [`<XrList>`](./XrList) | Scrolling list with items. |
 | [`<XrSelect>`](./XrSelect) | Dropdown with a floating list of options. |

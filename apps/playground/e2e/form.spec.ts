@@ -102,3 +102,58 @@ test.describe('checkbox and radio group in the emulated Quest 3', () => {
     await scene.expectText('Quality: Low')
   })
 })
+
+// Progress: #sync (a bar driven by #sync-step, +25% a press), a spinner
+// (#spinner) and an indeterminate bar (#loading).
+
+async function fillFraction(scene: Scene, bar: string) {
+  const fill = await scene.size(`${bar}.fill`)
+  const track = await scene.size(`${bar}.track`)
+  return (await scene.isShown(`${bar}.fill`)) ? fill![0] / track![0] : 0
+}
+
+test.describe('progress in the browser', () => {
+  test('the bar fills with its value and shows the percentage', async ({ scene }) => {
+    await openForm(scene, (l) => scene.click(l))
+    await scene.expectText('0%')
+    expect(await fillFraction(scene, '#sync')).toBe(0)
+    await scene.click('+25%')
+    await scene.expectText('25%')
+    await expect.poll(() => fillFraction(scene, '#sync')).toBeCloseTo(0.25, 2)
+    for (let i = 0; i < 3; i++) await scene.click('+25%')
+    await scene.expectText('100%')
+    await scene.expectText('Up to date')
+    await expect.poll(() => fillFraction(scene, '#sync')).toBeCloseTo(1, 2)
+    await scene.click('#sync-reset')
+    await scene.expectText('0%')
+  })
+
+  test('the spinner and the indeterminate bar move', async ({ scene }) => {
+    await openForm(scene, (l) => scene.click(l))
+    const angles = new Set<unknown>()
+    const lefts = new Set<unknown>()
+    for (let i = 0; i < 6; i++) {
+      angles.add(await scene.property('#spinner.ring', 'transformRotateZ'))
+      lefts.add(await scene.property('#loading.fill', 'positionLeft'))
+      await scene.page.waitForTimeout(120)
+    }
+    expect(angles.size).toBeGreaterThan(2)
+    expect(lefts.size).toBeGreaterThan(2)
+  })
+})
+
+test.describe('progress in the emulated Quest 3', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+  })
+
+  test('keeps animating in a session, and the bar follows a ray press', async ({ scene }) => {
+    await openForm(scene, (l) => scene.rayClick('right', l))
+    const first = await scene.property('#loading.fill', 'positionLeft')
+    await expect.poll(() => scene.property('#loading.fill', 'positionLeft')).not.toBe(first)
+    await scene.rayClick('right', '+25%')
+    await scene.expectText('25%')
+  })
+})

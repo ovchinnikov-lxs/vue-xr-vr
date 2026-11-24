@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watchEffect } from 'vue'
 import type { Mesh } from 'three'
-import { Bell, BellOff, Heart, Share2 } from 'lucide'
+import { Bell, BellOff, Heart, RotateCcw, Share2 } from 'lucide'
 import {
   XrBox,
   XrButton,
@@ -10,6 +10,7 @@ import {
   XrIcon,
   XrKeyboard,
   XrPanel,
+  XrProgress,
   XrRadioGroup,
   XrSelect,
   XrSlider,
@@ -61,6 +62,7 @@ const allRooms = computed(() => Object.values(rooms.value).every(Boolean))
 const someRooms = computed(() => !allRooms.value && Object.values(rooms.value).some(Boolean))
 const setAllRooms = (on: boolean) => Object.keys(rooms.value).forEach((room) => (rooms.value[room] = on))
 const quality = ref('High')
+const synced = ref(0)
 
 const status = computed(() => (xr.isPresenting.value ? `In session: ${xr.mode.value}` : 'In the browser'))
 
@@ -189,6 +191,18 @@ useXrFrame((delta) => {
           <XrRadioGroup v-model="quality" name="quality" :options="['Low', 'Medium', 'High']" />
         </XrBox>
       </XrBox>
+
+      <XrPanel variant="sunken" :padding="4" :gap="3">
+        <XrProgress name="sync" :value="synced" label="Sync" show-value />
+        <XrBox direction="row" align="center" :gap="3">
+          <XrButton name="sync-step" variant="secondary" size="sm" label="+25%" :disabled="synced >= 100" @click="synced += 25" />
+          <XrButton name="sync-reset" variant="ghost" size="sm" :icon="RotateCcw" @click="synced = 0" />
+          <XrBox :grow="1" align="flex-end">
+            <XrProgress name="spinner" variant="spinner" :size="24" :label="synced >= 100 ? 'Up to date' : 'Waiting…'" />
+          </XrBox>
+        </XrBox>
+        <XrProgress name="loading" indeterminate />
+      </XrPanel>
     </XrBox>
 
     <XrBox v-else-if="tab === 'Type'" :gap="3">
