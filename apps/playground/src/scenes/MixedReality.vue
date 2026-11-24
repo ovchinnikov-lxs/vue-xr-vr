@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { XrAnchor, XrBillboard, XrBox, XrButton, XrFollow, XrPanel, XrPlanes, XrText, XrToggle, XrWindow, useXr, useXrAnchor } from 'vue-xr-ui'
+import { XrAnchor, XrBillboard, XrBox, XrButton, XrFollow, XrHandMenu, XrPanel, XrPlanes, XrText, XrToggle, XrWindow, useXr, useXrAnchor } from 'vue-xr-ui'
 
 const xr = useXr()
 const status = computed(() => {
@@ -27,6 +27,10 @@ const noteAnchor = useXrAnchor('note')
 const cardOffset = ref(0)
 const cardPosition = computed<[number, number, number]>(() => [-0.75 + cardOffset.value, 1.05, -1.1])
 
+// Turn the left palm toward your face: a menu on the wrist.
+const menuOpen = ref(false)
+const taps = ref(0)
+
 const noteState = computed(() => (stuckTo.value ? `On the ${stuckTo.value}` : lastStuck.value ? `Was on the ${lastStuck.value}` : 'Floating'))
 </script>
 
@@ -51,6 +55,14 @@ const noteState = computed(() => (stuckTo.value ? `On the ${stuckTo.value}` : la
       <XrText variant="caption" muted>{{ follow ? hudState : 'Pinned' }}</XrText>
     </XrPanel>
   </XrFollow>
+
+  <XrHandMenu hand="left" @open="menuOpen = true" @close="menuOpen = false">
+    <XrPanel name="hand-menu" :width="240" :padding="3" :gap="2">
+      <XrText variant="label">Hand menu</XrText>
+      <XrButton name="menu-tap" size="sm" @click="taps++">Tapped {{ taps }}</XrButton>
+      <XrToggle v-model="showSurfaces">Surfaces</XrToggle>
+    </XrPanel>
+  </XrHandMenu>
 
   <XrPlanes v-if="showSurfaces" :labels="['wall', 'table']" />
 

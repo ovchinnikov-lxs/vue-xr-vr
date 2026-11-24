@@ -125,3 +125,26 @@ persistent anchor handle and the pose in the floor space. When the
 headset knows the handle, the anchor wins; when it does not (another room,
 PC VR, the desktop, cleared data) the pose stands in. The Quest asks for
 the "spatial data" permission the first time.
+
+## A menu on your hand
+
+```vue
+<XrHandMenu hand="left">
+  <XrPanel :width="240">
+    <XrButton @click="pinAll">Pin everything here</XrButton>
+  </XrPanel>
+</XrHandMenu>
+```
+
+Turn the left palm toward your face and the menu appears above it; poke
+it with the right index finger. It is the place for actions that should
+always be one gesture away without a panel floating in the room.
+
+## Testing MR in the emulator
+
+The e2e suite drives all of this in IWER's synthetic rooms: it enters
+passthrough, turns and moves the head, carries windows to the scanned
+walls and tables, reloads the page to check anchors, and turns a hand's
+palm. See `apps/playground/e2e/mr.spec.ts` and [Testing in an
+emulator](/guide/testing). Use the scanned rooms (`living_room`...) in
+CI: the furnished ones render at a few frames per second in software GL.

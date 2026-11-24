@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { useTres } from '@tresjs/core'
-import { Matrix4, Quaternion, Vector3, type Object3D, type WebGLRenderer } from 'three'
+import { Euler, Matrix4, Quaternion, Vector3, type Object3D, type WebGLRenderer } from 'three'
 import { Component as UikitComponent, Input, Text } from '@pmndrs/uikit'
 import { useXr, useXrFrame, useXrPlanes } from 'vue-xr-ui'
 
@@ -298,6 +298,19 @@ export default defineComponent({
       async moveHead(position: [number, number, number]) {
         device().position.set(...position)
         await frames(2)
+      },
+      /**
+       * Puts a hand at a point (world) with a rotation, as Euler angles in
+       * degrees applied in XYZ order to the default pose (palm down,
+       * fingers ahead).
+       */
+      async poseHand(hand: 'left' | 'right', position: [number, number, number], euler: [number, number, number]) {
+        const handInput = device().hands[hand]
+        if (!handInput) throw new Error(`No ${hand} hand`)
+        const q = new Quaternion().setFromEuler(new Euler(...(euler.map((d) => (d * Math.PI) / 180) as [number, number, number])))
+        handInput.position.set(...position)
+        handInput.quaternion.set(q.x, q.y, q.z, q.w)
+        await frames(3)
       },
       /** The user recentres the view (Meta button held). */
       async recenter() {

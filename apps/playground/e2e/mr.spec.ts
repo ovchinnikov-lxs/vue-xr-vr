@@ -173,3 +173,51 @@ test.describe('anchors', () => {
     await expect.poll(async () => (await scene.worldCenter('#card'))[0]).toBeCloseTo(start[0], 2)
   })
 })
+
+test.describe('hand menu', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    await page.getByRole('button', { name: 'Enter AR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+    await scene.setInputMode('hand')
+  })
+
+  test('opens when the left palm faces you, takes a poke, closes when it turns away', async ({ scene }) => {
+    // Palm down, in front of the chest: closed.
+    await scene.poseHand('left', [-0.1, 1.15, -0.35], [0, 0, 0])
+    expect(await scene.isShown('Hand menu')).toBe(false)
+
+    // Palm up and tilted toward the face.
+    await scene.poseHand('left', [-0.1, 1.15, -0.35], [50, 0, 180])
+    await expect.poll(() => scene.isShown('Hand menu')).toBe(true)
+    expect(await scene.facingAngle('#hand-menu')).toBeLessThan(5)
+    const menu = await scene.worldCenter('#hand-menu')
+    expect(menu[1]).toBeGreaterThan(1.15)
+
+    await scene.poke('right', '#menu-tap')
+    await scene.expectText('Tapped 1')
+
+    await scene.poseHand('left', [-0.1, 1.15, -0.35], [0, 0, 0])
+    await expect.poll(() => scene.isShown('Hand menu')).toBe(false)
+  })
+
+  test('the right hand does not open the left hand menu', async ({ scene }) => {
+    await scene.poseHand('right', [0.1, 1.15, -0.35], [50, 0, 180])
+    await scene.page.evaluate(() => window.__xrTest!.frames(10))
+    expect(await scene.isShown('Hand menu')).toBe(false)
+  })
+})
+
+test('a pinch carries a window onto a wall', async ({ scene, page }) => {
+  await scene.emulatorReady()
+  await page.getByRole('button', { name: 'Enter AR' }).click()
+  await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+  await expect.poll(async () => (await scene.planes()).length).toBeGreaterThan(5)
+  await scene.setInputMode('hand')
+  await scene.pinchHold('right', '#note.handle')
+  // Walk it toward the front wall (z = -2.46): a hand carries it directly.
+  for (let i = 0; i < 5; i++) await scene.moveHandBy('right', [0, 0, -0.28])
+  await scene.expectText('On the wall')
+  await scene.releasePinch('right')
+  expect((await scene.worldCenter('#note'))[2]).toBeCloseTo(-2.45, 1)
+})

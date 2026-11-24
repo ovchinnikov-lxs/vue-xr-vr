@@ -48,6 +48,9 @@ screen with a mouse.
   distance; targets big enough to poke.
 - **Controls you need in a headset**: windows you grab and move, lists you
   scroll with a finger, an on-screen keyboard with 6 languages and voice input.
+- **Mixed reality**: passthrough, panels that follow you, windows that snap
+  to your walls and tables and stay there across sessions (persistent
+  anchors), a menu on your hand.
 - **Themes**: dark and light, an accent from one colour, a theme per subtree.
 - **Tested like a user**: 33 end-to-end tests drive every control with the
   mouse, controller rays and hands in an emulated Quest 3 on every push.
@@ -130,6 +133,7 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrFollow>` | Keeps content in view: sits in front of the viewer, lazily follows turns (`angle`, `distance`, `height`), faces you; `active` pins it. |
 | `<XrBillboard>` | Turns content to face the viewer, upright (`axis="y"`) or fully. |
 | `<XrAnchor>` | Keeps content at a spot in the room across sessions and reloads (persistent WebXR anchors on Quest): `id`, slot `place()` / `forget()`. `useXrAnchor(id)` in code. |
+| `<XrHandMenu>` | A menu above the palm when you turn it toward your face (tracked hands); poke it with the other hand. `hand`, `angle`, `offset`, `open` / `close`. |
 | `<XrPlanes>` | Draws the walls, tables and floor the headset found (plane detection), filtered by `labels`. `useXrPlanes()` gives the planes. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |

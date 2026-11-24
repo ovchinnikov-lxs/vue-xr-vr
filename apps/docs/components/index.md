@@ -26,5 +26,6 @@
 | [`<XrBillboard>`](./XrBillboard) | Turns content to face the viewer. |
 | [`<XrPlanes>`](./XrPlanes) | Draws the walls, tables and floor the headset found. |
 | [`<XrAnchor>`](./XrAnchor) | Keeps content at a spot in the room across sessions. |
+| [`<XrHandMenu>`](./XrHandMenu) | A menu above the palm when you turn it toward your face. |
 | [`<XrThemeProvider>`](./XrThemeProvider) | Theme for a part of the scene. |
 | [`<XrEnterButton>`](./XrEnterButton) | DOM button to enter VR or AR. |

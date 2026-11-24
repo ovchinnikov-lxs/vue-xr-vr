@@ -38,6 +38,7 @@ interface XrTest {
   turnHead(yaw: number): Promise<void>
   moveHead(position: [number, number, number]): Promise<void>
   recenter(): Promise<void>
+  poseHand(hand: Hand, position: [number, number, number], euler: [number, number, number]): Promise<void>
   facingAngle(label: string): number
   bottom(label: string): number
   yaw(label: string): number
@@ -121,6 +122,11 @@ export class Scene {
 
   moveHead(position: [number, number, number]) {
     return this.page.evaluate((p) => window.__xrTest!.moveHead(p), position)
+  }
+
+  /** Puts a hand at a world point, rotated by XYZ Euler degrees from palm down, fingers ahead. */
+  poseHand(hand: Hand, position: [number, number, number], euler: [number, number, number]) {
+    return this.page.evaluate(([h, p, e]) => window.__xrTest!.poseHand(h, p, e), [hand, position, euler] as const)
   }
 
   recenter() {
