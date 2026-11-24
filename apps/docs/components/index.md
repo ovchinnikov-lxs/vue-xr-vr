@@ -24,5 +24,7 @@
 | [`<XrKeyboard>`](./XrKeyboard) | On-screen keyboard with voice input. |
 | [`<XrFollow>`](./XrFollow) | Keeps content in view: lazy follow, faces you. |
 | [`<XrBillboard>`](./XrBillboard) | Turns content to face the viewer. |
+| [`<XrPlanes>`](./XrPlanes) | Draws the walls, tables and floor the headset found. |
+| [`<XrAnchor>`](./XrAnchor) | Keeps content at a spot in the room across sessions. |
 | [`<XrThemeProvider>`](./XrThemeProvider) | Theme for a part of the scene. |
 | [`<XrEnterButton>`](./XrEnterButton) | DOM button to enter VR or AR. |

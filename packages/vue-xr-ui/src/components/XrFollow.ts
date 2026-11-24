@@ -101,7 +101,7 @@ export const XrFollow = defineComponent({
         }
       }
       setWorldPosition(object, current)
-      if (props.face) faceViewer(object, head)
+      if (props.face) faceViewer(object, current, head)
     })
 
     return () => h('TresGroup', { ...attrs, ref: group }, slots.default?.())
@@ -135,7 +135,7 @@ export const XrBillboard = defineComponent({
       const object = group.value
       if (!object) return
       view.headPosition(head)
-      if (props.axis === 'y') faceViewer(object, head)
+      if (props.axis === 'y') faceViewer(object, object.getWorldPosition(current), head)
       else object.lookAt(head)
     })
     return () => h('TresGroup', { ...attrs, ref: group }, slots.default?.())
@@ -152,8 +152,7 @@ function setWorldPosition(object: Object3D, world: Vector3) {
 }
 
 /** Yaw only: +z of the object points at the viewer, seen from above. */
-function faceViewer(object: Object3D, eye: Vector3) {
-  object.getWorldPosition(current)
+function faceViewer(object: Object3D, at: Vector3, eye: Vector3) {
   // Local rotation: assumes an unrotated parent (the scene, a moved group).
-  object.rotation.set(0, Math.atan2(eye.x - current.x, eye.z - current.z), 0)
+  object.rotation.set(0, Math.atan2(eye.x - at.x, eye.z - at.z), 0)
 }

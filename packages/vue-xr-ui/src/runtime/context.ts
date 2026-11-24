@@ -4,6 +4,7 @@ import type { createXRStore } from '@pmndrs/xr'
 import type { ThemeTokens } from '@vue-xr-ui/tokens'
 import type { Object3D, Vector3 } from 'three'
 import type { ControlPointerEvent } from './press'
+import type { PlaneTracker } from './planes'
 
 /** Called every frame, in and out of an XR session. `delta` is in milliseconds. */
 export type FrameCallback = (delta: number, frame: XRFrame | undefined) => void
@@ -63,6 +64,7 @@ export interface PressHub {
   onDown(cb: (event: ScenePointerEvent) => void): () => void
 }
 
+export const XR_PLANES: InjectionKey<PlaneTracker> = Symbol('vue-xr-ui:planes')
 export const XR_VIEW: InjectionKey<XrView> = Symbol('vue-xr-ui:view')
 export const XR_CONTROLLER: InjectionKey<XrController> = Symbol('vue-xr-ui:controller')
 export const XR_THEME: InjectionKey<Ref<ThemeTokens>> = Symbol('vue-xr-ui:theme')

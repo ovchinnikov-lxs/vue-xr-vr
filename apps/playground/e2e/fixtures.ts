@@ -39,6 +39,9 @@ interface XrTest {
   moveHead(position: [number, number, number]): Promise<void>
   recenter(): Promise<void>
   facingAngle(label: string): number
+  bottom(label: string): number
+  yaw(label: string): number
+  planes(): Array<{ label: string; orientation: string; center: [number, number, number]; normal: [number, number, number]; size: [number, number] }>
   head(): { position: [number, number, number]; forward: [number, number, number] }
   recordEvents(label: string): void
   events(): string[]
@@ -127,6 +130,20 @@ export class Scene {
   /** Degrees between where a label's panel faces and the direction to the head (0 = faces you). */
   facingAngle(label: string) {
     return this.page.evaluate((l) => window.__xrTest!.facingAngle(l), label)
+  }
+
+  /** World height of the bottom edge of a label's root (a window including its handle). */
+  bottom(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.bottom(l), label)
+  }
+
+  /** Rotation of a label's root around the vertical axis, radians (0 faces +z). */
+  yaw(label: string) {
+    return this.page.evaluate((l) => window.__xrTest!.yaw(l), label)
+  }
+
+  planes() {
+    return this.page.evaluate(() => window.__xrTest!.planes())
   }
 
   head() {

@@ -11,8 +11,8 @@ export const XrEnterButton = defineComponent({
   props: {
     /**
      * Which session it starts: `vr` (immersive), `ar` (passthrough, mixed
-     * reality), or `auto`: passthrough where the device has it (Quest 3,
-     * Quest Pro), else VR.
+     * reality), or `auto`: passthrough wherever `immersive-ar` is supported
+     * (Quest 3 and Pro in colour, Quest 2 in grey), else VR.
      */
     mode: { type: String as PropType<'vr' | 'ar' | 'auto'>, default: 'vr' },
   },

@@ -1,9 +1,12 @@
-import { defineComponent, h, inject, ref, type PropType } from 'vue'
+import { defineComponent, h, inject, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { Container } from '@pmndrs/uikit'
-import { Vector3 } from 'three'
+import { Quaternion, Vector3 } from 'three'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
-import { XR_VIEW } from '../runtime/context'
+import { useXrAnchor } from '../composables/useXrAnchor'
+import { useXrFrame } from '../composables/useXrFrame'
+import { XR_PLANES, XR_VIEW } from '../runtime/context'
+import { snapToPlanes, type XrSnapTarget } from '../runtime/planes'
 import { layoutProps } from '../runtime/layout'
 import { useChildNode, useUikitNode } from '../runtime/node'
 import { usePress, type ControlPointerEvent } from '../runtime/press'
@@ -39,10 +42,30 @@ export const XrWindow = defineComponent({
     material: String as PropType<'glass' | 'metal' | 'plastic'>,
     /** Show the handle and allow moving. */
     movable: { type: Boolean, default: true },
+    /**
+     * Stick to real surfaces while it is carried (passthrough on a Quest 3,
+     * from the room setup): `true` for walls and tables, or a list of plane
+     * labels (`['wall', 'window', 'table']`). On a wall it lies flat, facing
+     * into the room; on a table it stands on its bottom edge, facing you.
+     */
+    snap: { type: [Boolean, Array] as PropType<XrSnapTarget>, default: false },
+    /** How close, in metres, the window must come to a surface to stick to it. */
+    snapDistance: { type: Number, default: 0.15 },
+    /**
+     * Keep the window where the user puts it down, under this name, across
+     * sessions and reloads: a persistent WebXR anchor on a Quest, the pose in
+     * the floor space elsewhere. It wins over `position` once placed. Set it
+     * once; `useXrAnchor(name).forget()` drops the saved place.
+     */
+    anchor: String,
   },
   emits: {
     /** Where the window was put down (on release). */
     'update:position': (_position: Vec3) => true,
+    /** The window stuck to a surface (its label: `wall`, `table`...) or came off it (`null`), while carried. */
+    snap: (_label: string | null) => true,
+    /** The window was put down: its world position and its rotation around the vertical axis, in radians. */
+    place: (_placement: { position: Vec3; yaw: number }) => true,
   },
   setup(props, { slots, emit, attrs }) {
     const theme = useXrTheme()
@@ -74,6 +97,41 @@ export const XrWindow = defineComponent({
     const dragging = ref(false)
 
     const toParent = (world: Vector3) => (node.parent ? node.parent.worldToLocal(world) : world)
+    const toWorld = (local: Vector3) => (node.parent ? node.parent.localToWorld(local) : local)
+
+    // Planes are tracked only while some window wants to snap.
+    const planeTracker = inject(XR_PLANES, undefined)
+    let releasePlanes: (() => void) | undefined
+    watch(
+      () => props.snap !== false && (props.snap === true || props.snap.length > 0),
+      (on) => {
+        releasePlanes?.()
+        releasePlanes = on ? planeTracker?.use() : undefined
+      },
+      { immediate: true },
+    )
+    onBeforeUnmount(() => releasePlanes?.())
+    let snapped: string | null = null
+    let moved = false
+    const world = new Vector3()
+
+    // An anchored window follows its anchor whenever it is not being carried.
+    const anchor = props.anchor ? useXrAnchor(props.anchor) : undefined
+    const anchorPosition = new Vector3()
+    const anchorRotation = new Quaternion()
+    const facing = new Vector3()
+    if (anchor) {
+      useXrFrame(() => {
+        if (!anchor.anchored.value || dragging.value) return
+        anchor.matrix.decompose(anchorPosition, anchorRotation, facing)
+        const p = toParent(anchorPosition)
+        facing.set(0, 0, 1).applyQuaternion(anchorRotation)
+        yaw = Math.atan2(facing.x, facing.z)
+        node.position.copy(p)
+        node.rotation.set(0, yaw, 0)
+        placed = [p.x, p.y, p.z]
+      })
+    }
 
     const onDown = (event: ControlPointerEvent) => {
       if (!event.point) return
@@ -86,18 +144,40 @@ export const XrWindow = defineComponent({
       // @pmndrs/pointer-events pointer capture), so the window swings with
       // the controller; a hand or the mouse carries it along directly.
       const p = toParent(point.copy(event.point)).add(grabOffset)
-      node.position.copy(p)
-      placed = [p.x, p.y, p.z]
-      if (view) {
+      let stuck: ReturnType<typeof snapToPlanes>
+      if (view && planeTracker && releasePlanes && planeTracker.planes.value.length > 0) {
+        const halfHeight = ((node.size.value?.[1] ?? 0) * pixelSizeAt(props.distance ?? theme.value.viewingDistance)) / 2
+        stuck = snapToPlanes(toWorld(world.copy(p)), planeTracker.planes.value, props.snap, props.snapDistance, halfHeight, view.headPosition(head))
+      }
+      const label = stuck ? stuck.plane.label || stuck.plane.orientation : null
+      if (label !== snapped) {
+        snapped = label
+        emit('snap', label)
+      }
+      if (stuck) {
+        // Yaw is in world space; assumes an unrotated parent, like the facing below.
+        p.copy(toParent(world.copy(stuck.position)))
+        yaw = stuck.yaw
+        node.rotation.set(0, yaw, 0)
+      } else if (view) {
         // Turn to face the viewer, around the vertical axis only.
         toParent(view.headPosition(head))
         yaw = Math.atan2(head.x - p.x, head.z - p.z)
         node.rotation.set(0, yaw, 0)
       }
+      node.position.copy(p)
+      placed = [p.x, p.y, p.z]
+      moved = true
     }
     const onRelease = () => {
       dragging.value = false
-      if (placed) emit('update:position', [...placed])
+      // A tap on the handle is not a move: do not re-place (or re-anchor) it.
+      if (!placed || !moved) return
+      moved = false
+      emit('update:position', [...placed])
+      node.getWorldPosition(world)
+      emit('place', { position: [world.x, world.y, world.z], yaw: yaw ?? 0 })
+      if (anchor) void anchor.place(world.clone(), new Quaternion().setFromAxisAngle(facing.set(0, 1, 0), yaw ?? 0))
     }
 
     return () => {

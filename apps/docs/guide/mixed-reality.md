@@ -71,3 +71,57 @@ but turned toward you:
 The follow is lazy: small head movements leave the panel where it is, a real
 turn brings it back. That is calmer than a head-locked HUD and still keeps
 it reachable. Give the user a way to pin it (`:active="false"`).
+
+## Walls and tables
+
+A Quest 3 knows the room from its space setup: walls, floor, ceiling,
+tables, couches, windows and doors, each a **plane** with a label. Windows
+can snap to them:
+
+```vue
+<XrWindow snap :width="320" @snap="(label) => (stuckTo = label)">
+  <XrText>Carry me to a wall</XrText>
+</XrWindow>
+<XrPlanes v-if="showSurfaces" :labels="['wall', 'table']" />
+```
+
+With `snap`, a window carried within `snapDistance` (15 cm) of a wall lies
+flat on it, facing into the room; over a table it stands on its bottom
+edge, facing you. `useXrPlanes()` gives you the planes to place your own
+content. Plane detection is requested by `<XrScene>` as an optional
+feature, so the session starts on devices without it; the list is simply
+empty there.
+
+The first time a site asks for planes the Quest shows a permission prompt
+("spatial data"); without a room setup there are no planes. In the
+emulator every synthetic room has them.
+
+## Anchors: staying put in the room
+
+The floor origin moves when the user recentres or starts the next session
+somewhere else, so a position in scene metres is not a place in the room.
+An **anchor** is: the headset tracks it against the room itself. On a
+Quest, anchors can be **persistent**, so the panel is still on that wall
+tomorrow.
+
+```vue
+<!-- a window remembers where it was put down -->
+<XrWindow anchor="notes" snap>...</XrWindow>
+
+<!-- any content, pinned from code -->
+<XrAnchor id="dashboard" :position="[0, 1.4, -1]" v-slot="{ place, saved }">
+  <XrPanel><XrButton v-if="!saved" @click="place()">Pin here</XrButton></XrPanel>
+</XrAnchor>
+```
+
+```ts
+const notes = useXrAnchor('notes')
+notes.saved.value // something is saved
+notes.forget() // reset the layout
+```
+
+What is stored, under `localStorage['vue-xr-ui:anchors']`: the headset's
+persistent anchor handle and the pose in the floor space. When the
+headset knows the handle, the anchor wins; when it does not (another room,
+PC VR, the desktop, cleared data) the pose stands in. The Quest asks for
+the "spatial data" permission the first time.

@@ -109,7 +109,7 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | --- | --- |
 | `<XrScene>` | Put inside `<TresCanvas>`. Owns the XR session, input and frame loop. |
 | `<XrPanel>` | Floating surface, flex container with theme background. |
-| `<XrWindow>` | A panel with a handle bar: grab it with a ray, a pinch or the mouse to move it; it turns to face you. `v-model:position`. |
+| `<XrWindow>` | A panel with a handle bar: grab it with a ray, a pinch or the mouse to move it; it turns to face you. `v-model:position`. `snap`: sticks to walls and tables in passthrough; `anchor="name"`: remembers where it was put, across sessions. |
 | `<XrDialog>` | A modal panel that opens in front of the viewer over a backdrop that dims and blocks what is behind; closes on ×, Escape or a press outside. `v-model:open`. |
 | `<XrBox>` | Transparent flex container (the `<div>`). |
 | `<XrText>` | Text in the theme's type scale. |
@@ -129,6 +129,8 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrKeyboard>` | On-screen keyboard. `layouts`: built-in `en` `ru` `uk` `de` `fr` `es` and/or your own (`{ label, name, locale, rows }`), `v-model:layout`, `digits`, `symbols` (?123 page), `spaceLabel`, `keySize`, `enterLabel`, `voice`. Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
 | `<XrFollow>` | Keeps content in view: sits in front of the viewer, lazily follows turns (`angle`, `distance`, `height`), faces you; `active` pins it. |
 | `<XrBillboard>` | Turns content to face the viewer, upright (`axis="y"`) or fully. |
+| `<XrAnchor>` | Keeps content at a spot in the room across sessions and reloads (persistent WebXR anchors on Quest): `id`, slot `place()` / `forget()`. `useXrAnchor(id)` in code. |
+| `<XrPlanes>` | Draws the walls, tables and floor the headset found (plane detection), filtered by `labels`. `useXrPlanes()` gives the planes. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
 

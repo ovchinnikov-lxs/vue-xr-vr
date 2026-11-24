@@ -3,11 +3,12 @@ import { useLoop, useTresContext } from '@tresjs/core'
 import { reversePainterSortStable } from '@pmndrs/uikit'
 import { createXRStore, type XRStoreOptions } from '@pmndrs/xr'
 import { getVoidObject } from '@pmndrs/pointer-events'
-import type { Object3D, Scene, WebGLRenderer } from 'three'
-import { FRAME_HUB, PRESS_HUB, XR_CONTROLLER, XR_VIEW, type FrameCallback, type FrameHub, type PressHub, type ScenePointerEvent } from '../runtime/context'
+import type { Object3D, Scene, Vector3, WebGLRenderer } from 'three'
+import { FRAME_HUB, PRESS_HUB, XR_CONTROLLER, XR_PLANES, XR_VIEW, type FrameCallback, type FrameHub, type PressHub, type ScenePointerEvent } from '../runtime/context'
 import type { InternalXrController } from '../runtime/controller'
 import { injectAppWide } from '../runtime/app-inject'
 import { injectEmulator, type EmulatorOptions } from '../runtime/emulator'
+import { createPlaneTracker } from '../runtime/planes'
 
 /**
  * Turns a <TresCanvas> into an XR-capable scene. Place it directly inside
@@ -110,8 +111,23 @@ export const XrScene = defineComponent({
     provide(PRESS_HUB, presses)
     const viewer = () => (renderer.xr.isPresenting ? renderer.xr.getCamera() : getCamera())
     const recenterListeners = new Set<() => void>()
+    // Before render, three.js has the XR camera at the first eye's pose (it
+    // moves it to the centre between the eyes only while rendering), so take
+    // the midpoint of the eyes ourselves: a panel facing the left eye is off
+    // by ~2 degrees.
+    const headPosition = (target: Vector3) => {
+      const eyes = renderer.xr.isPresenting ? renderer.xr.getCamera().cameras : []
+      if (eyes.length < 2) return viewer().getWorldPosition(target)
+      target.addVectors(eyes[0]!.position, eyes[1]!.position).multiplyScalar(0.5)
+      const parent = getCamera().parent
+      if (parent) {
+        parent.updateWorldMatrix(true, false)
+        target.applyMatrix4(parent.matrixWorld)
+      }
+      return target
+    }
     provide(XR_VIEW, {
-      headPosition: (target) => viewer().getWorldPosition(target),
+      headPosition,
       headDirection: (target) => viewer().getWorldDirection(target),
       onRecenter(cb) {
         recenterListeners.add(cb)
@@ -119,8 +135,12 @@ export const XrScene = defineComponent({
       },
     })
 
+    const planes = createPlaneTracker(store)
+    provide(XR_PLANES, planes)
+
     const tick = (delta: number, frame: XRFrame | undefined) => {
       store.update(frame, delta)
+      planes.update(frame)
       for (const cb of callbacks) cb(delta, frame)
     }
 

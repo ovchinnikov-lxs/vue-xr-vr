@@ -2,7 +2,7 @@ import { defineComponent } from 'vue'
 import { useTres } from '@tresjs/core'
 import { Matrix4, Quaternion, Vector3, type Object3D, type WebGLRenderer } from 'three'
 import { Component as UikitComponent, Input, Text } from '@pmndrs/uikit'
-import { useXr, useXrFrame } from 'vue-xr-ui'
+import { useXr, useXrFrame, useXrPlanes } from 'vue-xr-ui'
 
 /**
  * Test-only bridge for the Playwright suite in `e2e/`. Mounted in dev builds
@@ -14,6 +14,7 @@ export default defineComponent({
   setup() {
     const tres = useTres()
     const xr = useXr()
+    const planes = useXrPlanes()
 
     const allTexts = (): Text[] => {
       const out: Text[] = []
@@ -52,7 +53,7 @@ export default defineComponent({
      * World-space point on a uikit component's panel, `fx` of the way from
      * its left edge (0) to its right edge (1), vertically centred.
      */
-    const worldPoint = (c: UikitComponent, fx = 0.5): Vector3 => {
+    const worldPoint = (c: UikitComponent, fx = 0.5, fy = 0): Vector3 => {
       const panel = c.globalPanelMatrix.value
       if (!panel) throw new Error('Component has no layout yet')
       // uikit sets a root's own matrix to its panel transform (scaled to the
@@ -62,7 +63,7 @@ export default defineComponent({
       const placement = new Matrix4().compose(root.position, root.quaternion, root.scale)
       if (root.parent) placement.premultiply(root.parent.matrixWorld)
       // The panel matrix maps a unit square centred on the origin onto the panel.
-      return new Vector3(fx - 0.5, 0, 0).applyMatrix4(placement.multiply(panel))
+      return new Vector3(fx - 0.5, fy, 0).applyMatrix4(placement.multiply(panel))
     }
 
     /** Moves a controller or hand in front of a point on a label and aims its ray at it. */
@@ -311,6 +312,15 @@ export default defineComponent({
         const toHead = camera.getWorldPosition(new Vector3()).sub(worldPoint(targetFor(label)))
         return (facing.angleTo(toHead) * 180) / Math.PI
       },
+      /** Detected planes: label, orientation, world centre and normal, size in metres. */
+      planes: () =>
+        planes.value.map((p) => ({
+          label: p.label,
+          orientation: p.orientation,
+          center: p.center.toArray(),
+          normal: p.normal.toArray(),
+          size: [p.max.x - p.min.x, p.max.y - p.min.y],
+        })),
       /** Head position and the level direction it looks in (unit, y = 0), in world space. */
       head() {
         const camera = (tres.renderer as unknown as WebGLRenderer).xr.getCamera()
@@ -340,6 +350,14 @@ export default defineComponent({
       },
       /** World-space centre of a label's component, as [x, y, z]. */
       worldCenter: (label: string) => worldPoint(targetFor(label)).toArray(),
+      /** World height of the bottom edge of a label's whole root (a window with its handle). */
+      bottom: (label: string) => worldPoint(rootOf(targetFor(label)), 0.5, -0.5).y,
+      /** Rotation of a label's root around the vertical axis, in radians (0 faces +z). */
+      yaw(label: string) {
+        const root = rootOf(targetFor(label)) as unknown as Object3D
+        const facing = root.getWorldDirection(new Vector3())
+        return Math.atan2(facing.x, facing.z)
+      },
       /** Holds the trigger on a label and moves the controller by `delta` metres (ray stays parallel). */
       async rayCarry(hand: 'left' | 'right', label: string, delta: [number, number, number]) {
         const controller = device().controllers[hand]
