@@ -268,6 +268,14 @@ issues:
   - title: "API review: names, props, events consistent across components"
     milestone: "1.0 Release"
     labels: [component]
+  - title: "Restyling: a parts prop, then a public headless layer (useXrCheckbox, useXrSelect, ...)"
+    milestone: "1.0 Release"
+    labels: [component]
+    body: |
+      Today a theme and the `ui` prop restyle a component, but not its inner parts or their arrangement. The value of the kit is the XR behaviour (mouse, ray, pinch, poke; pointer capture; a drag never selects; focus and modal stack; popups over scrolling content), so it should be usable with your own look.
+      1. `parts` prop: raw uikit props per named part (`box`, `mark`, `track`, `fill`, `circle`, `dot`, `popup`, ...), merged after the defaults. Part names become public API and documented on each page.
+      2. Headless composables: `useXrCheckbox`, `useXrRadioGroup`, `useXrSelect`, `useXrSlider`, `useXrNumberInput`, ... return state and press handlers; the built-in components become thin wrappers. `usePress` and `usePopupLayer` become public.
+      Done when: every component has `parts`, documented; at least checkbox, select and slider have public composables, a docs guide "Build your own look" with a custom-styled demo, and e2e for a component built only from the composable. Before 1.0 because it changes the public API.
   - title: "Performance budget: 72+ fps on Quest 3 with the demo app, measured"
     milestone: "1.0 Release"
     labels: [perf, needs-headset]
