@@ -15,10 +15,13 @@ export const XrTooltip = defineComponent({
   name: 'XrTooltip',
   inheritAttrs: false,
   props: {
+    /** The hint. Short: one line, no wrapping. */
     text: { type: String, required: true },
+    /** Show it above (`top`) or below (`bottom`) what it wraps. */
     placement: { type: String as PropType<'top' | 'bottom'>, default: 'top' },
     /** Hover time (ms) before it shows, so sweeping a ray across UI does not flash hints. */
     delay: { type: Number, default: 400 },
+    /** Never show it (and hide it if shown). */
     disabled: Boolean,
   },
   setup(props, { slots }) {
@@ -70,8 +73,11 @@ export const XrTooltip = defineComponent({
         borderRadius: t.radius.sm,
         backgroundColor: t.colors.text,
         color: t.colors.surface,
-        // Drawn over neighbours, and never the target of a pointer itself.
-        zIndexOffset: 10,
+        // Drawn after its neighbours (text included) and a little in front
+        // of them, like XrSelect's list. Not zIndex: that also pulls hit
+        // tests 1 cm per step towards the pointer. Never a pointer target.
+        renderOrder: 1,
+        transformTranslateZ: gap,
         pointerEvents: 'none',
       }
     })
