@@ -113,13 +113,19 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrDialog>` | A modal panel that opens in front of the viewer over a backdrop that dims and blocks what is behind; closes on ×, Escape or a press outside. `v-model:open`. |
 | `<XrBox>` | Transparent flex container (the `<div>`). |
 | `<XrText>` | Text in the theme's type scale. |
-| `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`. |
+| `<XrButton>` | `primary` / `secondary` / `ghost`, `sm` / `md` / `lg`, `disabled`, `icon` (icon-only buttons are round). |
+| `<XrIcon>` | A [Lucide](https://lucide.dev) icon node (`import { Heart } from 'lucide'`) or an SVG string, in the surrounding text colour. Outlines are triangulated, so Lucide works. |
 | `<XrToggle>` | On/off switch with a label, `v-model`. |
+| `<XrCheckbox>` | Checkbox with a label, `v-model`, `indeterminate`. |
+| `<XrRadioGroup>` | One of a few options, all shown: `v-model`, `options` as strings or `{ label, value, description, disabled }`, `direction`. |
 | `<XrSlider>` | Number in a range, `v-model`, `min` / `max` / `step`. Drag with a ray or slide a fingertip along it. |
+| `<XrProgress>` | Progress bar (`value` / `max`, `label`, `showValue`), `indeterminate` sweep, or `variant="spinner"`. Animates in the headset. |
 | `<XrTabs>` | Segmented tabs, `v-model`. Switches a value; show the content with `v-if`. |
 | `<XrList>` / `<XrListItem>` | Scrolling list (drag with a ray or finger, mouse wheel); items have label, description, `selected`. A drag never selects. |
+| `<XrSelect>` | Dropdown, `v-model`. `options` as strings or `{ label, value, description, disabled }`, `placeholder`, `placement`, `maxHeight`. The list floats over the content around it and closes on a choice, the field, Escape or a press outside. |
 | `<XrTooltip>` | Hint shown while a ray, fingertip or mouse hovers what it wraps. |
 | `<XrTextField>` | Single-line text input, `v-model`, `placeholder`, `type="password"`. Real caret: tap where to type. Physical keyboard works on desktop. Enter emits `submit`. |
+| `<XrNumberInput>` | Number with − / + (held: repeats) and a field, `v-model`, `min` / `max` / `step` / `precision`, `suffix`. Typed text is clamped on Enter or blur. |
 | `<XrKeyboard>` | On-screen keyboard. `layouts`: built-in `en` `ru` `uk` `de` `fr` `es` and/or your own (`{ label, name, locale, rows }`), `v-model:layout`, `digits`, `symbols` (?123 page), `spaceLabel`, `keySize`, `enterLabel`, `voice`. Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
