@@ -20,10 +20,23 @@ test.describe('in the emulated Quest 3', () => {
     await scene.expectText('Count: 1')
   })
 
-  test('enters an AR session', async ({ scene, page }) => {
+  test('enters an AR session with passthrough', async ({ scene, page }) => {
+    expect((await scene.renderState()).clearAlpha).toBe(1)
     await page.getByRole('button', { name: 'Enter AR' }).click()
     await expect.poll(() => scene.state()).toMatchObject({ presenting: true, mode: 'immersive-ar' })
     await scene.expectText('In session: immersive-ar')
+    // The room shows through wherever nothing is drawn.
+    expect(await scene.renderState()).toEqual({ clearAlpha: 0, background: false })
+
+    await scene.exit()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: false })
+    expect((await scene.renderState()).clearAlpha).toBe(1)
+  })
+
+  test('a VR session keeps the opaque background', async ({ scene, page }) => {
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true, mode: 'immersive-vr' })
+    expect((await scene.renderState()).clearAlpha).toBe(1)
   })
 
   test('controller ray + trigger clicks a button', async ({ scene, page }) => {

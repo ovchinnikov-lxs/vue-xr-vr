@@ -14,6 +14,7 @@ interface XrTest {
   isShown(label: string): boolean
   state(): { presenting: boolean; mode: string | null; emulator: boolean }
   size(label: string): [number, number] | null
+  renderState(): { clearAlpha: number; background: boolean }
   inputState(label: string): { value: string; focused: boolean; selection?: [number, number] }
   background(label: string): string
   property(label: string, key: string): unknown
@@ -48,11 +49,16 @@ declare global {
 export class Scene {
   constructor(readonly page: Page) {}
 
-  async ready() {
-    await this.page.waitForFunction(() => {
-      const size = window.__xrTest?.size('Increment')
-      return size != null && size[0] > 0
-    })
+  /** Waits until `label` (a text in the scene) is laid out. */
+  async ready(label = 'Increment') {
+    await this.page.waitForFunction((l) => {
+      try {
+        const size = window.__xrTest?.size(l)
+        return size != null && size[0] > 0
+      } catch {
+        return false
+      }
+    }, label)
   }
 
   async emulatorReady() {
@@ -69,6 +75,10 @@ export class Scene {
 
   state() {
     return this.page.evaluate(() => window.__xrTest!.state())
+  }
+
+  renderState() {
+    return this.page.evaluate(() => window.__xrTest!.renderState())
   }
 
   size(label: string) {
@@ -198,8 +208,12 @@ export class Scene {
   }
 }
 
-export const test = base.extend<{ scene: Scene }>({
-  scene: async ({ page }, use) => {
+export const test = base.extend<{ scene: Scene; scenePath: string; readyLabel: string }>({
+  /** The playground URL a test opens: `/?e2e` (components), `/?e2e&scene=mr&room=kitchen` (MR). */
+  scenePath: ['/?e2e', { option: true }],
+  /** A text that is in the scene once it has loaded. */
+  readyLabel: ['Increment', { option: true }],
+  scene: async ({ page, scenePath, readyLabel }, use) => {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     // Controller layouts and models normally come from a CDN; serve them locally.
@@ -244,9 +258,9 @@ export const test = base.extend<{ scene: Scene }>({
       ;(window as unknown as { SpeechRecognition: unknown }).SpeechRecognition = FakeSpeechRecognition
     })
     if (coverageEnabled) await page.coverage.startJSCoverage({ resetOnNavigation: false })
-    await page.goto('/?e2e')
+    await page.goto(scenePath)
     const scene = new Scene(page)
-    await scene.ready()
+    await scene.ready(readyLabel)
     await use(scene)
     if (coverageEnabled) await new CoverageReport(coverageOptions).add(await page.coverage.stopJSCoverage())
     expect(errors, 'uncaught errors in the page').toEqual([])

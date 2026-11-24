@@ -3,7 +3,7 @@ import { useLoop, useTresContext } from '@tresjs/core'
 import { reversePainterSortStable } from '@pmndrs/uikit'
 import { createXRStore, type XRStoreOptions } from '@pmndrs/xr'
 import { getVoidObject } from '@pmndrs/pointer-events'
-import type { Object3D, WebGLRenderer } from 'three'
+import type { Object3D, Scene, WebGLRenderer } from 'three'
 import { FRAME_HUB, PRESS_HUB, XR_CONTROLLER, XR_VIEW, type FrameCallback, type FrameHub, type PressHub, type ScenePointerEvent } from '../runtime/context'
 import type { InternalXrController } from '../runtime/controller'
 import { injectAppWide } from '../runtime/app-inject'
@@ -22,7 +22,7 @@ export const XrScene = defineComponent({
   name: 'XrScene',
   props: {
     /**
-     * Options for @pmndrs/xr's store: session features (`handTracking`,
+     * Options for the `@pmndrs/xr` store: session features (`handTracking`,
      * `planeDetection`, `hitTest`, `anchors`...) and input config.
      */
     options: { type: Object as PropType<Omit<XRStoreOptions<any>, 'emulate'>>, default: () => ({}) },
@@ -32,8 +32,25 @@ export const XrScene = defineComponent({
      * `false` turns it off.
      */
     emulator: { type: [Object, Boolean] as PropType<EmulatorOptions | boolean>, default: true },
+    /**
+     * In a passthrough (`immersive-ar`) session, clear to transparent and
+     * hide `scene.background`, so the room shows through behind the UI. Both
+     * come back when the session ends. `false` keeps the canvas colour.
+     */
+    passthrough: { type: Boolean, default: true },
   },
-  emits: ['sessionStart', 'sessionEnd'],
+  emits: {
+    /** A session started (VR or passthrough). */
+    sessionStart: (_session: XRSession) => true,
+    /** The session ended. */
+    sessionEnd: () => true,
+    /**
+     * The user recentred the view (held the Meta button): the floor origin
+     * moved to where they stand now. Content placed in front of the user
+     * can be placed again; anchored content stays where it is in the room.
+     */
+    recenter: () => true,
+  },
   setup(props, { slots, emit }) {
     const ctx = useTresContext()
     const controller = injectAppWide(XR_CONTROLLER) as InternalXrController | undefined
@@ -127,7 +144,34 @@ export const XrScene = defineComponent({
       ctx.renderer.loop.start()
     }
 
+    // Passthrough: the compositor shows the camera feed wherever the frame
+    // is transparent. TresCanvas clears with an opaque colour, so clear to
+    // alpha 0 for the session and put the canvas colour back afterwards.
+    let saved: { alpha: number; background: Scene['background'] } | undefined
+    const showRoom = () => {
+      saved = { alpha: renderer.getClearAlpha(), background: scene.background }
+      renderer.setClearAlpha(0)
+      scene.background = null
+    }
+    const hideRoom = () => {
+      if (!saved) return
+      renderer.setClearAlpha(saved.alpha)
+      scene.background = saved.background
+      saved = undefined
+    }
+
+    // A recentre (Meta button held) fires `reset` on the reference space.
+    let space: XRReferenceSpace | undefined
+    const onReset = () => emit('recenter')
+    const watchSpace = (next: XRReferenceSpace | undefined) => {
+      if (next === space) return
+      space?.removeEventListener('reset', onReset)
+      space = next
+      space?.addEventListener('reset', onReset)
+    }
+
     const unsubscribe = store.subscribe((state, prev) => {
+      watchSpace(state.originReferenceSpace)
       // @pmndrs/xr builds controllers, hands and their pointers once it knows
       // the scene origin (on the first XR frame), but only for input sources
       // that arrive after that. Sources the session reports up front (hands
@@ -137,10 +181,13 @@ export const XrScene = defineComponent({
         queueMicrotask(() => store.setState({ inputSourceStates: [...store.getState().inputSourceStates] }))
       }
       if (state.session && !prev.session) {
+        if (state.mode === 'immersive-ar' && props.passthrough) showRoom()
         startXrLoop()
         emit('sessionStart', state.session)
       } else if (!state.session && prev.session) {
         stopXrLoop()
+        hideRoom()
+        watchSpace(undefined)
         emit('sessionEnd')
       }
     })
@@ -151,6 +198,8 @@ export const XrScene = defineComponent({
       detach()
       stopVoid()
       if (presenting) renderer.setAnimationLoop(null)
+      hideRoom()
+      watchSpace(undefined)
       store.destroy()
     })
 

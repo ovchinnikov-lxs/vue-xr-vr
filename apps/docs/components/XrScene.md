@@ -13,6 +13,8 @@ Turns a `<TresCanvas>` into an XR-capable scene. Place it directly inside `<Tres
 </TresCanvas>
 ```
 
+In a passthrough (`immersive-ar`) session it clears to transparent so the room shows through, and it emits `recenter` when the user recentres the view. See [Mixed reality](/guide/mixed-reality).
+
 ## API
 
 <!--@include: ./api/XrScene.md-->

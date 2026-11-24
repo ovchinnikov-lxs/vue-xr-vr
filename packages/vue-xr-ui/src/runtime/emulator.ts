@@ -2,7 +2,25 @@ import type { XRDevice } from 'iwer'
 import type { XRStore } from './context'
 
 export type EmulatedDevice = 'metaQuest3' | 'metaQuest2' | 'metaQuestPro' | 'oculusQuest1'
-export type EmulatedRoom = 'office_small' | 'meeting_room' | 'living_room' | 'music_room' | 'office_large'
+/**
+ * A synthetic room for passthrough, planes and meshes: a scanned capture
+ * (`living_room`, `office_small`...) or a furnished procedural room
+ * (`kitchen`, `bedroom`...), all bundled with @iwer/sem.
+ */
+export type EmulatedRoom =
+  | 'office_small'
+  | 'meeting_room'
+  | 'living_room'
+  | 'music_room'
+  | 'office_large'
+  | 'bedroom'
+  | 'conference_room'
+  | 'home_office'
+  | 'kitchen'
+  | 'music_studio'
+  | 'open_office'
+  | 'open_studio'
+  | 'sunlit_living_room'
 
 export interface EmulatorOptions {
   /** Which headset to emulate. Default: Quest 3. */

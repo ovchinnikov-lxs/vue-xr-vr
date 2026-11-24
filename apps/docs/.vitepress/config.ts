@@ -34,6 +34,7 @@ export default defineConfig({
             { text: 'Input', link: '/guide/input' },
             { text: 'Theming', link: '/guide/theming' },
             { text: 'Text and voice input', link: '/guide/text-input' },
+            { text: 'Mixed reality', link: '/guide/mixed-reality' },
             { text: 'Testing on a Quest', link: '/guide/quest' },
             { text: 'Testing in an emulator', link: '/guide/testing' },
           ],

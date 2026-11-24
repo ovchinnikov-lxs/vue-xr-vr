@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { useTres } from '@tresjs/core'
-import { Matrix4, Quaternion, Vector3, type Object3D } from 'three'
+import { Matrix4, Quaternion, Vector3, type Object3D, type WebGLRenderer } from 'three'
 import { Component as UikitComponent, Input, Text } from '@pmndrs/uikit'
 import { useXr, useXrFrame } from 'vue-xr-ui'
 
@@ -193,6 +193,8 @@ export default defineComponent({
         mode: xr.mode.value,
         emulator: xr.store.value?.getState().emulator != null,
       }),
+      /** What the renderer clears to, and whether the scene has a background (passthrough hides both). */
+      renderState: () => ({ clearAlpha: (tres.renderer as unknown as WebGLRenderer).getClearAlpha(), background: tres.scene.value.background != null }),
       size: (label: string) => targetFor(label).size.value ?? null,
       /** The value of the text input inside a component (an <XrTextField>), and whether it has focus. */
       inputState: (label: string) => {
