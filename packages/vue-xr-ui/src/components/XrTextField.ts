@@ -18,17 +18,25 @@ export const XrTextField = defineComponent({
   name: 'XrTextField',
   inheritAttrs: false,
   props: {
+    /** The text (`v-model`). Without it the field keeps its own text. */
     modelValue: String,
+    /** Shown, muted, while the field is empty. */
     placeholder: String,
+    /** Greys it out; it cannot take focus. */
     disabled: Boolean,
     /** `password` shows dots instead of the text. */
     type: { type: String as PropType<'text' | 'password'>, default: 'text' },
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
+    /** The text changed: typing, XrKeyboard, voice or the system keyboard (`v-model`). */
     'update:modelValue': (_value: string) => true,
+    /** Enter was pressed, on any keyboard. */
     submit: (_value: string) => true,
+    /** It took text focus. */
     focus: () => true,
+    /** It lost text focus. */
     blur: () => true,
   },
   setup(props, { emit, expose }) {

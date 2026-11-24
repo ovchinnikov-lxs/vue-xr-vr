@@ -34,6 +34,8 @@ const emitDocs = (source) => {
 }
 
 let count = 0
+// Every public prop and event must say what it does: the table is the reference.
+const undocumented = []
 for (const file of readdirSync(componentsDir).filter((f) => f.endsWith('.ts'))) {
   const path = join(componentsDir, file)
   const events = emitDocs(readFileSync(path, 'utf8'))
@@ -51,11 +53,13 @@ for (const file of readdirSync(componentsDir).filter((f) => f.endsWith('.ts'))) 
   if (props.length) {
     lines.push('| Prop | Type | Default | Description |', '| --- | --- | --- | --- |')
     for (const p of props) {
+      if (!p.description) undocumented.push(`${name} prop ${p.name}`)
       lines.push(`| \`${p.name}\`${p.required ? ' *' : ''} | ${code(typeOf(p.type))} | ${code(p.default)} | ${cell(p.description)} |`)
     }
   } else lines.push('None.')
   if (meta.events.length) {
     lines.push('', '### Events', '', '| Event | Payload | Description |', '| --- | --- | --- |')
+    for (const e of meta.events) if (!(e.description || events.get(e.name))) undocumented.push(`${name} event ${e.name}`)
     for (const e of meta.events) lines.push(`| \`${e.name}\` | ${code(e.type?.replace(/^\[|\]$/g, '').replace(/(^|, )_/g, '$1'))} | ${cell(e.description || events.get(e.name))} |`)
   }
   if (meta.slots.length) {
@@ -67,3 +71,7 @@ for (const file of readdirSync(componentsDir).filter((f) => f.endsWith('.ts'))) 
   }
 }
 console.log(`API tables: ${count} components -> components/api/`)
+if (undocumented.length) {
+  console.error(`No JSDoc (add a /** comment */ in the component source):\n  ${undocumented.join('\n  ')}`)
+  process.exit(1)
+}

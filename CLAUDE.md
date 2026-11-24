@@ -118,7 +118,8 @@ Re-run only the failing spec while fixing.
   however long; a control captures the pointer until release; a drag never
   selects. Every control must work with mouse, ray, pinch and poke.
 - **Public API** = `src/index.ts`. Every prop and event gets a JSDoc comment:
-  it becomes the docs API table.
+  it becomes the docs API table, and `apps/docs/scripts/api.mjs` (run by the
+  docs build) fails on any that has none.
 - No comments that restate code; comment the why and the gotcha.
 
 ### Gotchas already paid for
@@ -148,6 +149,14 @@ Re-run only the failing spec while fixing.
 - Sphere pointers (hand grab and fingertip touch) report a `pointerdown` on
   the void object whenever nothing is near the hand: ignore those when
   listening for "press outside" (PRESS_HUB, XrSelect).
+- A popup that must not be clipped by a scrolling ancestor is a layout root
+  of its own (runtime/popup.ts `usePopupLayer`), placed every frame at its
+  anchor; XrSelect's list works that way. Name parts (`<name>-popup`,
+  `option-<value>`) for e2e: labels repeat across the scene.
+- uikit's `Svg` only fills shapes; Lucide icons are all strokes. XrIcon
+  triangulates strokes itself (SVGLoader.pointsToStroke) into a `Content`.
+- Timers in the emulator (and on a busy headset) fire late: anything that
+  repeats while held should count from the clock, not from timer ticks.
 - E2E: Playwright 1.56 has no Chromium for ubuntu 26.04, so the e2e job is
   pinned to ubuntu-24.04. Input profiles are served from e2e/assets.
 

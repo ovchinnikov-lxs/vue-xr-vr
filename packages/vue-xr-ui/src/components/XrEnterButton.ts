@@ -9,6 +9,7 @@ import { useXr } from '../composables/useXr'
 export const XrEnterButton = defineComponent({
   name: 'XrEnterButton',
   props: {
+    /** Which session it starts: `vr` (immersive) or `ar` (passthrough, mixed reality). */
     mode: { type: String as PropType<'vr' | 'ar'>, default: 'vr' },
   },
   setup(props, { slots }) {

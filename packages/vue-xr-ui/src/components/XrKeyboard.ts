@@ -88,6 +88,7 @@ export const XrKeyboard = defineComponent({
   name: 'XrKeyboard',
   inheritAttrs: false,
   props: {
+    /** Text the keyboard edits by itself (`v-model`). Leave it out to type into the last focused XrTextField. */
     modelValue: { type: String, default: undefined },
     /** Built-in layout names (`en`, `ru`, `uk`, `de`, `fr`, `es`) and/or your own layouts. */
     layouts: {
@@ -121,12 +122,17 @@ export const XrKeyboard = defineComponent({
      * without v-model: a keyboard bound to a string is the only way to edit it.
      */
     preferSystemKeyboard: { type: Boolean, default: true },
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
+    /** The edited text, with `v-model` only. */
     'update:modelValue': (_value: string) => true,
+    /** The active layout changed (the layout key or a tab): its index in `layouts` (`v-model:layout`). */
     'update:layout': (_index: number) => true,
+    /** A key was typed: the character, or `Backspace` / `Enter`. */
     key: (_key: XrKeyboardKey) => true,
+    /** Enter was pressed. */
     enter: () => true,
     /** Voice input failed, e.g. "not-allowed" (no microphone permission) or "network". */
     voiceError: (_error: string) => true,

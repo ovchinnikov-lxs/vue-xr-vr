@@ -20,6 +20,7 @@ export const XrPanel = defineComponent({
   inheritAttrs: false,
   props: {
     ...layoutProps,
+    /** Background: `surface` (the panel), `raised` (a card over it) or `sunken` (a well in it). */
     variant: { type: String as PropType<'surface' | 'raised' | 'sunken'>, default: 'surface' },
     /** Reading distance in metres for a root panel. Scales it to keep the same angular size. */
     distance: Number,

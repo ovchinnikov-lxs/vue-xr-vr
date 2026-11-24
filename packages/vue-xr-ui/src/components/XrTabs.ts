@@ -17,14 +17,19 @@ export const XrTabs = defineComponent({
   name: 'XrTabs',
   inheritAttrs: false,
   props: {
+    /** The active tab's value (`v-model`). */
     modelValue: String,
+    /** The tabs: strings, or `{ label, value, disabled? }`. */
     tabs: { type: Array as PropType<XrTabOption[]>, required: true },
     /** Stretch to the parent's width, tabs sharing it equally. */
     block: Boolean,
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
+    /** A tab was chosen (`v-model`). */
     'update:modelValue': (_value: string) => true,
+    /** A tab other than the active one was chosen. */
     change: (_value: string) => true,
   },
   setup(props, { emit }) {

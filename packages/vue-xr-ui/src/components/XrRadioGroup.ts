@@ -37,7 +37,8 @@ const RadioOption = defineComponent({
     checked: Boolean,
     disabled: Boolean,
   },
-  emits: { choose: (_event: ControlPointerEvent) => true },
+  // An array: scripts/api.mjs reads event docs from the first emits object in the file.
+  emits: ['choose'],
   setup(props, { emit }) {
     const theme = useXrTheme()
     const press = usePress({ disabled: () => props.disabled, onPress: (event) => emit('choose', event) })

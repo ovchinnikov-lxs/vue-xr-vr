@@ -10,12 +10,17 @@ export const XrText = defineComponent({
   name: 'XrText',
   inheritAttrs: false,
   props: {
+    /** A step of the theme's type scale: `caption`, `body`, `label`, `title` or `headline`. */
     variant: { type: String as PropType<TextVariant>, default: 'body' },
+    /** The text. The default slot (plain text) is used when it is left out. */
     text: [String, Number],
+    /** Draw it in the theme's muted text colour. */
     muted: Boolean,
     /** Overrides the color inherited from the parent. */
     color: String,
+    /** Horizontal alignment of the lines. */
     align: String as PropType<'left' | 'center' | 'right' | 'justify'>,
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   setup(props, { slots }) {

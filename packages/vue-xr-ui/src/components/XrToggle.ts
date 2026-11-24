@@ -15,13 +15,19 @@ export const XrToggle = defineComponent({
   name: 'XrToggle',
   inheritAttrs: false,
   props: {
+    /** On or off (`v-model`). */
     modelValue: Boolean,
+    /** Text next to the switch. The default slot replaces it. */
     label: String,
+    /** Greys it out; it does not react to any input. */
     disabled: Boolean,
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
+    /** The new state after a press (`v-model`). */
     'update:modelValue': (_value: boolean) => true,
+    /** Pressed: the new state and the pointer event. */
     change: (_value: boolean, _event: ControlPointerEvent) => true,
   },
   setup(props, { slots, emit }) {

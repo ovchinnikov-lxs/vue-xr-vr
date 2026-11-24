@@ -17,7 +17,9 @@ export const XrList = defineComponent({
   props: {
     /** Height (dmm) above which the list scrolls. */
     maxHeight: { type: Number, default: 240 },
+    /** Space between items: a spacing step, or `"12px"`. */
     gap: { type: [Number, String] as PropType<SpaceValue>, default: 1 },
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   setup(props, { slots }) {
@@ -53,13 +55,19 @@ export const XrListItem = defineComponent({
   name: 'XrListItem',
   inheritAttrs: false,
   props: {
+    /** The main text. The default slot replaces label and description. */
     label: String,
+    /** A second, muted line under the label. */
     description: String,
+    /** Highlighted as the current one. */
     selected: Boolean,
+    /** Greyed out; it does not react. */
     disabled: Boolean,
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
+    /** Tapped, with any input. Not emitted when the list is dragged from it. */
     click: (_event: ControlPointerEvent) => true,
   },
   setup(props, { slots, emit }) {

@@ -21,7 +21,9 @@ import { XR_THEME } from '../runtime/context'
 export const XrThemeProvider = defineComponent({
   name: 'XrThemeProvider',
   props: {
+    /** The theme for everything inside it. Defaults to the surrounding theme. */
     theme: Object as PropType<ThemeTokens>,
+    /** One accent colour; primary, hover, active and focus colours are derived from it (`withAccent`). */
     accent: String,
   },
   setup(props, { slots }) {

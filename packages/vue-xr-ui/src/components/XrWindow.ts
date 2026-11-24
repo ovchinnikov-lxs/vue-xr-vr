@@ -29,10 +29,13 @@ export const XrWindow = defineComponent({
   inheritAttrs: false,
   props: {
     ...layoutProps,
+    /** Where the window is, in scene metres. Use with `v-model:position` to keep where the user put it. */
     position: { type: Array as unknown as PropType<Vec3>, default: () => [0, 1.4, -1] },
+    /** Background: `surface`, `raised` or `sunken` (see XrPanel). */
     variant: { type: String as PropType<'surface' | 'raised' | 'sunken'>, default: 'surface' },
     /** Reading distance in metres. Scales the window to keep the same angular size. */
     distance: Number,
+    /** Lit material preset for the background (see XrPanel). */
     material: String as PropType<'glass' | 'metal' | 'plastic'>,
     /** Show the handle and allow moving. */
     movable: { type: Boolean, default: true },

@@ -18,19 +18,27 @@ export const XrSlider = defineComponent({
   name: 'XrSlider',
   inheritAttrs: false,
   props: {
+    /** The value (`v-model`), between `min` and `max`. */
     modelValue: { type: Number, default: 0 },
+    /** Value at the left end. */
     min: { type: Number, default: 0 },
+    /** Value at the right end. */
     max: { type: Number, default: 100 },
+    /** Values snap to multiples of it from `min`. */
     step: { type: Number, default: 1 },
+    /** Greys it out; it does not react to any input. */
     disabled: Boolean,
     /** Width in dmm. Ignored with `block`. */
     width: { type: Number, default: 240 },
     /** Stretch to the parent's width. */
     block: Boolean,
+    /** Escape hatch: raw uikit (`@pmndrs/uikit`) properties, merged last. */
     ui: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
   },
   emits: {
+    /** The value while dragging (`v-model`). */
     'update:modelValue': (_value: number) => true,
+    /** The value when the drag ends (released). */
     change: (_value: number) => true,
   },
   setup(props, { emit }) {
