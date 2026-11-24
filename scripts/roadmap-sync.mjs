@@ -75,8 +75,10 @@ for (const m of plan.milestones) {
   if (!have) {
     const created = await write(`milestone + ${m.title}`, () => gh('POST', `/repos/${owner}/${repo}/milestones`, m))
     milestones.set(m.title, created ?? { number: 0, title: m.title })
-  } else if ((have.description ?? '') !== m.description) {
-    await write(`milestone ~ ${m.title}`, () => gh('PATCH', `/repos/${owner}/${repo}/milestones/${have.number}`, { description: m.description }))
+  } else if ((have.description ?? '') !== m.description || (m.state && have.state !== m.state)) {
+    // `state` is set only when the plan names one, so a milestone closed by hand stays closed.
+    const patch = { description: m.description, ...(m.state ? { state: m.state } : {}) }
+    await write(`milestone ~ ${m.title}`, () => gh('PATCH', `/repos/${owner}/${repo}/milestones/${have.number}`, patch))
   }
 }
 

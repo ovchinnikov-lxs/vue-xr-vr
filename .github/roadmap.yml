@@ -6,6 +6,7 @@
 #   existing one (matched by title) gets its milestone and labels set. It
 #   never closes, reopens or deletes anything. After an issue exists, GitHub
 #   is its source of truth (close it with "Closes #N" in a commit on main).
+# - A milestone with `state: closed` is closed on GitHub (when it is released).
 # - `state: closed` creates an issue already closed, for work that is done,
 #   so milestones show real progress.
 # - Add new work here (or straight on GitHub); Claude reads both.
@@ -41,8 +42,10 @@ labels:
 milestones:
   - title: "0.1 Foundation"
     description: "Scene, input, the first controls, themes, keyboard, emulator tests, playground deploy. Released as 0.1.0 on npm."
+    state: closed
   - title: "0.2 Components"
-    description: "The rest of the core kit: dialog, select, number input, checkbox/radio, progress, icons, focus navigation."
+    description: "The rest of the core kit: dialog, select, number input, checkbox/radio, progress, icons. Released as 0.2.0 on npm."
+    state: closed
   - title: "0.3 Docs site"
     description: "A real documentation site, deployed, with live demos and generated API tables for every component."
   - title: "0.4 Mixed reality"
@@ -183,21 +186,32 @@ issues:
     milestone: "0.2 Components"
     labels: [component]
   - title: "Focus and keyboard navigation (Tab, arrows, Enter) and a visible focus ring"
-    milestone: "0.2 Components"
+    milestone: "1.0 Release"
     labels: [input]
   - title: "JSDoc for every prop and event, so the generated API tables are complete"
     milestone: "0.2 Components"
     labels: [docs, component]
   - title: "Emulator: make iwer an optional dependency of the library"
-    milestone: "0.2 Components"
+    milestone: "0.3 Docs site"
     labels: [perf, release]
     body: "`iwer`, `@iwer/devui` (with React) and `@iwer/sem` are already imported dynamically, but they are regular dependencies: every install pulls them and every app build emits ~10 MB of emulator chunks (rooms, devui). Make them optional peer dependencies (or a separate `vue-xr-ui/emulator` entry) so apps opt in."
   - title: "Fonts: ship MSDF fonts as binary assets, not 260 KB JS chunks"
-    milestone: "0.2 Components"
+    milestone: "0.5 Demo app"
     labels: [perf]
   - title: "Unit tests (Vitest) for tokens, withAccent, keyboard layouts, press logic"
-    milestone: "0.2 Components"
+    milestone: "1.0 Release"
     labels: [testing]
+
+  - title: "Release 0.2.0 to npm"
+    milestone: "0.2 Components"
+    labels: [release]
+    state: closed
+    body: "XrSelect, XrIcon, XrCheckbox, XrRadioGroup, XrProgress, XrNumberInput, XrDialog with focus trap, the Quest system keyboard, popup layering fixes, JSDoc on every prop. Published as vue-xr-ui and @vue-xr-ui/tokens 0.2.0."
+
+  - title: "E2E flake: page reloads mid-test (Execution context was destroyed)"
+    milestone: "0.3 Docs site"
+    labels: [testing]
+    body: "CI run 45435072108: `form.spec.ts` number input ray test failed with `page.evaluate: Execution context was destroyed, most likely because of a navigation`; the same commit passed on the next run. Likely Vite's dev server finding a new dependency (dynamic imports: iwer, devui, lucide) and reloading the page. Done when the e2e server pre-bundles them (`optimizeDeps.include`) or runs against `vite preview`, and the suite passes 5 runs in a row."
 
   - title: "Text focus and modal stack per scene, not per page"
     milestone: "0.3 Docs site"
