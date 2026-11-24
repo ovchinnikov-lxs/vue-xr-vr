@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watchEffect } from 'vue'
 import type { Mesh } from 'three'
-import { Bell, BellOff, Heart, RotateCcw, Share2 } from 'lucide'
+import { Bell, BellOff, Heart, RotateCcw, Share2, Trash2 } from 'lucide'
 import {
   XrBox,
   XrButton,
@@ -95,6 +95,15 @@ const languageTab = computed({
 })
 
 const message = ref('')
+// Two dialogs stacked: "Clear history?" (with a field of its own) asks again in front of itself.
+const clearOpen = ref(false)
+const sureOpen = ref(false)
+const clearNote = ref('')
+function clearHistory() {
+  sent.value = []
+  sureOpen.value = false
+  clearOpen.value = false
+}
 const sent = ref<string[]>([])
 function send() {
   if (!message.value.trim()) return
@@ -213,7 +222,12 @@ useXrFrame((delta) => {
     </XrBox>
 
     <XrBox v-else-if="tab === 'Type'" :gap="3">
-      <XrText variant="label">Message</XrText>
+      <XrBox direction="row" align="center" justify="space-between">
+        <XrText variant="label">Message</XrText>
+        <XrTooltip text="Clear history">
+          <XrButton name="clear" variant="ghost" size="sm" :icon="Trash2" @click="clearOpen = true" />
+        </XrTooltip>
+      </XrBox>
       <XrTextField v-model="message" name="message" placeholder="Привет! Type here…" @submit="send" />
       <XrText variant="caption" muted>{{ typeHint }}</XrText>
       <XrTabs v-if="!xr.systemKeyboard.value" v-model="languageTab" name="languages" :tabs="languages.map((l) => l.toUpperCase())" block />
@@ -262,6 +276,22 @@ useXrFrame((delta) => {
     <template #actions>
       <XrButton variant="secondary" @click="(danger = 'Kept'), (confirmOpen = false)">Cancel</XrButton>
       <XrButton @click="(count = 0), (danger = 'Deleted'), (confirmOpen = false)">Delete</XrButton>
+    </template>
+  </XrDialog>
+
+  <XrDialog v-model:open="clearOpen" name="clear-dialog" title="Clear history?">
+    <XrText muted>Fields behind this dialog cannot take focus while it is open.</XrText>
+    <XrTextField v-model="clearNote" name="note" placeholder="A note (optional)" />
+    <template #actions>
+      <XrButton name="clear-cancel" variant="secondary" @click="clearOpen = false">Cancel</XrButton>
+      <XrButton @click="sureOpen = true">Clear</XrButton>
+    </template>
+  </XrDialog>
+  <XrDialog v-model:open="sureOpen" name="sure-dialog" title="Really clear?" :width="400">
+    <XrText muted>{{ sent.length }} sent messages go away.</XrText>
+    <template #actions>
+      <XrButton variant="secondary" @click="sureOpen = false">Keep</XrButton>
+      <XrButton @click="clearHistory">Yes, clear</XrButton>
     </template>
   </XrDialog>
 

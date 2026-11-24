@@ -3,6 +3,7 @@ import { Container, Input } from '@pmndrs/uikit'
 import { useXrTheme } from '../composables/useXrTheme'
 import { useXrFrame } from '../composables/useXrFrame'
 import { useUikitNode } from '../runtime/node'
+import { inTopModal } from '../runtime/modal'
 import { activeTextTarget, type TextTarget } from '../runtime/text-target'
 
 /**
@@ -61,7 +62,7 @@ export const XrTextField = defineComponent({
           ...(props.disabled || focused.value ? {} : { hover: { borderColor: c.textMuted } }),
           // A press on the padding (not on the text) focuses at the end.
           onPointerDown: () => {
-            if (props.disabled || input.hasFocus.peek()) return
+            if (props.disabled || input.hasFocus.peek() || !inTopModal(node)) return
             const end = current().length
             setTimeout(() => input.focus(end, end))
           },
@@ -89,10 +90,17 @@ export const XrTextField = defineComponent({
         selectionColor: c.focusRing,
         onValueChange: (value: string) => setValue(value),
         onFocusChange: (hasFocus: boolean) => {
+          // Behind an open dialog (Tab, or a focus() call): give it straight back.
+          if (hasFocus && !inTopModal(node)) {
+            input.blur()
+            return
+          }
+          const was = focused.value
           focused.value = hasFocus
-          if (hasFocus) activeTextTarget.value = target
-          if (hasFocus) emit('focus')
-          else emit('blur')
+          if (hasFocus) {
+            activeTextTarget.value = target
+            emit('focus')
+          } else if (was) emit('blur')
         },
       }
     }
@@ -140,6 +148,13 @@ export const XrTextField = defineComponent({
       textBeforeCaret() {
         return current().slice(0, selection()[0])
       },
+      node,
+      focus() {
+        const end = current().length
+        input.focus(end, end)
+      },
+      blur: () => input.blur(),
+      focused: () => input.hasFocus.peek(),
     }
 
     // uikit reads the caret from the hidden <input> only on its input, key and
@@ -162,13 +177,7 @@ export const XrTextField = defineComponent({
       input.dispose()
     })
 
-    expose({
-      focus: () => {
-        const end = current().length
-        input.focus(end, end)
-      },
-      blur: () => input.blur(),
-    })
+    expose({ focus: target.focus, blur: target.blur })
 
     return () => render()
   },

@@ -86,3 +86,86 @@ test.describe('dialog in the emulated Quest 3', () => {
     await expectClosed(scene, 'Deleted')
   })
 })
+
+// The Type tab's trash button (#clear) opens "Clear history?" (with its own
+// field, #note) over the message field (#message); its Clear opens "Really
+// clear?" in front of it.
+
+test.describe('dialog focus and stacking', () => {
+  test('fields behind an open dialog cannot take focus; focus comes back on close', async ({ scene, page }) => {
+    await scene.click('Type')
+    await expect.poll(() => scene.isShown('#key-q')).toBe(true)
+    await scene.click('#message')
+    await expect.poll(async () => (await scene.inputState('#message')).focused).toBe(true)
+    await page.keyboard.type('hi')
+    await expect.poll(async () => (await scene.inputState('#message')).value).toBe('hi')
+
+    await scene.click('#clear')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(true)
+    expect((await scene.inputState('#message')).focused).toBe(false)
+    // Typing, Tab, and a focus() call on the hidden input all stay away from the field behind.
+    await page.keyboard.type('x')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('y')
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('input')) el.focus()
+    })
+    await page.keyboard.type('z')
+    await page.waitForTimeout(200)
+    expect((await scene.inputState('#message')).value).toBe('hi')
+    expect((await scene.inputState('#message')).focused).toBe(false)
+
+    // The dialog's own field works.
+    await scene.click('#note')
+    await expect.poll(async () => (await scene.inputState('#note')).focused).toBe(true)
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type('ok')
+    await expect.poll(async () => (await scene.inputState('#note')).value).toBe('ok')
+
+    await scene.click('#clear-cancel')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(false)
+    // The on-screen keyboard types into the message field again.
+    await scene.click('#key-q')
+    await expect.poll(async () => (await scene.inputState('#message')).value).toBe('hiq')
+  })
+
+  test('a dialog over a dialog opens in front, and Escape closes only the topmost', async ({ scene, page }) => {
+    await scene.click('Type')
+    await scene.click('#clear')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(true)
+    await scene.click('Clear')
+    await expect.poll(() => scene.isShown('Really clear?')).toBe(true)
+    // Nearer to the viewer (the camera looks down -z).
+    const [, , zFirst] = await scene.worldCenter('Clear history?')
+    const [, , zSecond] = await scene.worldCenter('Really clear?')
+    expect(zSecond).toBeGreaterThan(zFirst + 0.05)
+
+    await page.keyboard.press('Escape')
+    await expect.poll(() => scene.isShown('Really clear?')).toBe(false)
+    await page.waitForTimeout(200)
+    expect(await scene.isShown('Clear history?')).toBe(true)
+    await page.keyboard.press('Escape')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(false)
+  })
+})
+
+test.describe('stacked dialogs in the emulated Quest 3', () => {
+  test.beforeEach(async ({ scene, page }) => {
+    await scene.emulatorReady()
+    await page.getByRole('button', { name: 'Enter VR' }).click()
+    await expect.poll(() => scene.state()).toMatchObject({ presenting: true })
+  })
+
+  test('the ray reaches the dialog in front, then the one under it', async ({ scene }) => {
+    await scene.rayClick('right', 'Type')
+    await scene.rayClick('right', '#clear')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(true)
+    await scene.rayClick('right', 'Clear')
+    await expect.poll(() => scene.isShown('Really clear?')).toBe(true)
+    await scene.rayClick('right', 'Keep')
+    await expect.poll(() => scene.isShown('Really clear?')).toBe(false)
+    expect(await scene.isShown('Clear history?')).toBe(true)
+    await scene.rayClick('right', '#clear-cancel')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(false)
+  })
+})

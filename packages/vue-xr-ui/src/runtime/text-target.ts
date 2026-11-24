@@ -1,4 +1,5 @@
 import { shallowRef } from 'vue'
+import type { Object3D } from 'three'
 
 /** What a virtual keyboard types into. */
 export interface TextTarget {
@@ -7,6 +8,12 @@ export interface TextTarget {
   submit(): void
   /** The text before the caret (to know whether dictated words need a space). */
   textBeforeCaret(): string
+  /** The field's node: a modal dialog keeps focus away from fields outside it. */
+  node?: Object3D
+  focus?(): void
+  blur?(): void
+  /** Has DOM focus now (not only "is the last focused field"). */
+  focused?(): boolean
 }
 
 /**

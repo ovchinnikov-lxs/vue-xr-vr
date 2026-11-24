@@ -44,6 +44,12 @@ It opens a little closer than other UI (0.75 × the theme's `viewingDistance`, s
 
 The backdrop colour is the theme's `colors.scrim`.
 
+## Focus and stacked dialogs
+
+While a dialog is open, text fields outside it cannot take focus: a field that had it loses it, Tab or a `focus()` call on a field behind gives it straight back, and an [XrKeyboard](./XrKeyboard) stops typing into it. Fields inside the dialog work as usual. On close, the keyboard types into the field it typed into before, and that field gets focus back if it had it when the dialog opened.
+
+A dialog opened while another is open (a "really?" after a "delete?") opens a little closer to the viewer, in front of the first and over its backdrop. **Escape** closes only the topmost one.
+
 ## API
 
 <!--@include: ./api/XrDialog.md-->

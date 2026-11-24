@@ -1,9 +1,10 @@
-import { defineComponent, h, inject, onBeforeUnmount, watch, type PropType } from 'vue'
+import { defineComponent, h, inject, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { Container } from '@pmndrs/uikit'
 import { Vector3 } from 'three'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
 import { XR_VIEW } from '../runtime/context'
+import { closeModal, modalStack, openModal, type FocusReturn } from '../runtime/modal'
 import { useUikitNode } from '../runtime/node'
 import { usePress, type ControlPointerEvent } from '../runtime/press'
 import { XrBox } from './XrBox'
@@ -21,6 +22,8 @@ const BACKDROP_SIZE = 6
  * (and wins the pointer hit test) instead of cutting through them.
  */
 const NEARER = 0.75
+/** Each dialog opened over another comes this much closer, so the newer one is in front. */
+const STACK_STEP = 0.85
 
 /**
  * A modal panel that opens in front of the viewer, at reading distance and
@@ -41,6 +44,11 @@ const NEARER = 0.75
  * plane just behind the dialog: it blocks UI farther away than the dialog,
  * not objects between the viewer and it. Place it at the top level of the
  * scene (not inside another panel).
+ *
+ * While it is open, text fields outside it cannot take focus (a focused one
+ * loses it, and XrKeyboard stops typing into it); on close, focus goes back
+ * to the field that had it. A dialog opened over another opens in front of
+ * it, and Escape closes only the topmost.
  */
 export const XrDialog = defineComponent({
   name: 'XrDialog',
@@ -80,6 +88,9 @@ export const XrDialog = defineComponent({
   setup(props, { slots, emit }) {
     const theme = useXrTheme()
     const view = inject(XR_VIEW, undefined)
+    /** How many dialogs were open under this one when it opened. */
+    const depth = ref(0)
+    const distance = () => props.distance ?? theme.value.viewingDistance * NEARER * STACK_STEP ** depth.value
 
     const close = (reason: 'button' | 'escape' | 'backdrop') => {
       if (!props.open) return
@@ -104,7 +115,7 @@ export const XrDialog = defineComponent({
       (initial) => new Container(initial),
       () => {
         const t = theme.value
-        const pixelSize = pixelSizeAt(props.distance ?? t.viewingDistance * NEARER)
+        const pixelSize = pixelSizeAt(distance())
         const size = props.backdrop ? BACKDROP_SIZE / pixelSize : undefined
         return {
           pixelSize,
@@ -130,7 +141,6 @@ export const XrDialog = defineComponent({
     const head = new Vector3()
     const forward = new Vector3()
     const place = () => {
-      const distance = props.distance ?? theme.value.viewingDistance * NEARER
       if (!view) {
         if (props.position) node.position.set(...props.position)
         return
@@ -143,13 +153,29 @@ export const XrDialog = defineComponent({
         view.headDirection(forward)
         forward.y = 0
         if (forward.lengthSq() < 1e-6) forward.set(0, 0, -1)
-        p.copy(head).addScaledVector(forward.normalize(), distance)
+        p.copy(head).addScaledVector(forward.normalize(), distance())
       }
       const local = node.parent ? node.parent.worldToLocal(p.clone()) : p
       const localHead = node.parent ? node.parent.worldToLocal(head.clone()) : head
       node.position.copy(local)
       node.rotation.set(0, Math.atan2(localHead.x - local.x, localHead.z - local.z), 0)
     }
+    let focusReturn: FocusReturn | undefined
+    watch(
+      () => props.open,
+      (open) => {
+        if (open) {
+          depth.value = modalStack.value.filter((n) => n !== node).length
+          focusReturn = openModal(node)
+        } else {
+          closeModal(node, focusReturn)
+          focusReturn = undefined
+        }
+      },
+      { immediate: true },
+    )
+    onBeforeUnmount(() => closeModal(node, focusReturn))
+
     watch(
       () => [props.open, props.position?.join(), props.distance] as const,
       ([open]) => open && place(),
@@ -157,7 +183,8 @@ export const XrDialog = defineComponent({
     )
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && props.closeOnEscape) close('escape')
+      // One Escape, one dialog: the topmost.
+      if (event.key === 'Escape' && props.closeOnEscape && modalStack.value.at(-1) === node) close('escape')
     }
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', onKey)
