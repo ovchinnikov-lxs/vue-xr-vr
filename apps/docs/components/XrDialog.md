@@ -40,9 +40,11 @@ Your own buttons close it by setting `open` to `false`; that emits no `close`.
 
 When `open` turns `true`, the dialog is placed in front of the viewer's head, level with their eyes and turned to face them. In a session that is the headset; on a desktop it is the camera. Pass `position` to open it at a fixed place instead.
 
-It opens a little closer than other UI (0.75 × the theme's `viewingDistance`, scaled so it looks the same size), so the backdrop, a plane just behind the dialog, covers the panels at reading distance and catches the pointer before they do. It does not block objects between the viewer and the dialog. `:backdrop="false"` turns the backdrop off; the dialog is then not modal.
+It opens a little closer than other UI (0.75 × the theme's `viewingDistance`, scaled so it looks the same size), so it reads as on top of it.
 
-The backdrop colour is the theme's `colors.scrim`.
+The backdrop dims the whole scene: it is a sphere around the viewer's head, seen from inside and drawn over everything except the dialog, so it covers what is behind you and what is close to you too, and there is nothing to walk through. It fades in, follows the head, and takes every controller ray or pinch that misses the dialog (a press on it closes the dialog). Fingertips do not press it: a poke beside the dialog does nothing. Popups and tooltips inside the dialog draw over it. `:backdrop="false"` turns it off; the dialog is then not modal.
+
+The backdrop colour and its opacity are the theme's `colors.scrim`.
 
 ## Focus and stacked dialogs
 

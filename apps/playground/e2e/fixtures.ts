@@ -14,9 +14,12 @@ interface XrTest {
   isShown(label: string): boolean
   state(): { presenting: boolean; mode: string | null; emulator: boolean }
   size(label: string): [number, number] | null
-  renderState(): { clearAlpha: number; background: boolean }
+  renderState(): { clearAlpha: number; background: boolean; foveation: number | null }
   inputState(label: string): { value: string; focused: boolean; selection?: [number, number] }
   background(label: string): string
+  turnRoot(label: string, yaw: number): void
+  object(name: string): { inScene: boolean; position: [number, number, number] }
+  pixel(x: number, y: number): [number, number, number, number]
   property(label: string, key: string): unknown
   screenPoint(label: string, fx?: number): { x: number; y: number }
   setInputMode(mode: 'controller' | 'hand'): Promise<void>

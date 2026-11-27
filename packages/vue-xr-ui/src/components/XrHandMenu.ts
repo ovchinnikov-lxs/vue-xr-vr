@@ -1,19 +1,15 @@
 import { defineComponent, h, inject, ref, shallowRef, type PropType } from 'vue'
-import { Matrix4, Object3D, Vector3 } from 'three'
+import { Object3D, Vector3 } from 'three'
 import { useXr } from '../composables/useXr'
 import { useXrFrame } from '../composables/useXrFrame'
 import { XR_VIEW } from '../runtime/context'
-import { spaceToWorld } from '../runtime/xr-pose'
+import { createPalmPose, palmPose } from '../runtime/palm'
 
 type Vec3 = [number, number, number]
 
-const joint = new Matrix4()
-const wrist = new Vector3()
-const knuckle = new Vector3()
+const pose = createPalmPose()
 const palm = new Vector3()
-const normal = new Vector3()
 const head = new Vector3()
-const toHead = new Vector3()
 const up = new Vector3(0, 1, 0)
 const side = new Vector3()
 
@@ -78,20 +74,12 @@ export const XrHandMenu = defineComponent({
       // A session tick without an XRFrame (window rAF, see planes.ts): skip.
       if (session && !frame) return
       const source = session && [...session.inputSources].find((s) => s.hand && s.handedness === props.hand)
-      const hand = source?.hand
-      const wristSpace = hand?.get('wrist')
-      const knuckleSpace = hand?.get('middle-finger-metacarpal')
-      if (!frame || !store || !wristSpace || !knuckleSpace || !spaceToWorld(store, frame, wristSpace, joint)) return setOpen(false)
-      wrist.setFromMatrixPosition(joint)
-      // Joint spaces: -y points out of the palm (WebXR Hand Input).
-      normal.set(0, -1, 0).transformDirection(joint)
-      if (!spaceToWorld(store, frame, knuckleSpace, joint)) return setOpen(false)
-      knuckle.setFromMatrixPosition(joint)
-      palm.addVectors(wrist, knuckle).multiplyScalar(0.5)
-
+      const found = frame && store && source?.hand ? palmPose(store, frame, source.hand, view, pose) : undefined
+      if (!found) return setOpen(false)
+      const off = found.angleToHead
+      const normal = found.normal
+      palm.copy(found.center)
       view.headPosition(head)
-      toHead.copy(head).sub(palm).normalize()
-      const off = (Math.acos(Math.min(1, Math.max(-1, normal.dot(toHead)))) * 180) / Math.PI
       setOpen(open.value ? off < props.angle : off < props.angle - 15)
       const object = group.value
       if (!open.value || !object) return

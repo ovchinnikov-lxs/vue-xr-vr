@@ -1,11 +1,11 @@
-import { defineComponent, h, inject, onBeforeUnmount, ref, watch, type PropType } from 'vue'
+import { defineComponent, h, inject, onBeforeUnmount, provide, ref, watch, type PropType } from 'vue'
 import { Container } from '@pmndrs/uikit'
 import { Quaternion, Vector3 } from 'three'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
 import { useXrAnchor } from '../composables/useXrAnchor'
 import { useXrFrame } from '../composables/useXrFrame'
-import { XR_PLANES, XR_VIEW } from '../runtime/context'
+import { SURFACE_HOST, XR_PLANES, XR_VIEW } from '../runtime/context'
 import { snapToPlanes, type XrSnapTarget } from '../runtime/planes'
 import { layoutProps } from '../runtime/layout'
 import { useChildNode, useUikitNode } from '../runtime/node'
@@ -83,6 +83,8 @@ export const XrWindow = defineComponent({
         }
       },
     )
+
+    provide(SURFACE_HOST, node)
 
     // Where the window was moved to by hand. Kept outside Vue's reactivity:
     // it is applied to the object directly every move, and re-renders read it.

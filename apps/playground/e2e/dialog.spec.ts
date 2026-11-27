@@ -70,13 +70,32 @@ test.describe('dialog in the emulated Quest 3', () => {
     await expectClosed(scene, 'Kept')
   })
 
-  test('controller ray on the backdrop closes it', async ({ scene }) => {
+  test('controller ray on the backdrop closes it', async ({ scene, page }) => {
     await openDialog(scene, (l) => scene.rayClick('right', l))
-    // The test hook aims from 40 cm in front of the target, so aim at the
-    // backdrop itself, beside the dialog (a card behind it would put the
-    // controller past the backdrop).
-    await scene.rayClick('right', '#backdrop', { fx: 0.43 })
+    // Aim beside the dialog: the ray goes on into the backdrop around the head.
+    await page.evaluate(() => window.__xrTest!.aim('right', '#dialog', -0.4))
+    await page.evaluate(() => window.__xrTest!.frames(2))
+    await page.evaluate(() => window.__xrTest!.pullTrigger('right'))
     await expectClosed(scene, 'Kept')
+  })
+
+  test('the backdrop dims the whole scene, behind the viewer too', async ({ scene, page }) => {
+    await openDialog(scene, (l) => scene.rayClick('right', l))
+    // The backdrop is drawn around the head: turning around, the scene is still dimmed.
+    const backdrop = await page.evaluate(() => {
+      const shell = window.__xrTest!.object('backdrop')
+      return shell
+    })
+    expect(backdrop).toMatchObject({ inScene: true })
+    const head = await page.evaluate(() => window.__xrTest!.head().position)
+    expect(Math.hypot(...backdrop!.position.map((v, i) => v - head[i]!))).toBeLessThan(0.05)
+    await page.evaluate(() => window.__xrTest!.moveHead([1.5, 1.6, 0.5]))
+    await page.evaluate(() => window.__xrTest!.frames(3))
+    const moved = await page.evaluate(() => window.__xrTest!.object('backdrop'))
+    expect(Math.hypot(...moved!.position.map((v, i) => v - [1.5, 1.6, 0.5][i]!))).toBeLessThan(0.1)
+    await scene.rayClick('right', 'Cancel')
+    await expectClosed(scene, 'Kept')
+    expect(await page.evaluate(() => window.__xrTest!.object('backdrop'))).toMatchObject({ inScene: false })
   })
 
   test('a fingertip opens it and presses Delete', async ({ scene }) => {
@@ -182,5 +201,16 @@ test.describe('stacked dialogs in the emulated Quest 3', () => {
     expect(await scene.isShown('Clear history?')).toBe(true)
     await scene.rayClick('right', '#clear-cancel')
     await expect.poll(() => scene.isShown('Clear history?')).toBe(false)
+  })
+
+  test('the keyboard types into a field inside the dialog, through the backdrop', async ({ scene }) => {
+    await scene.rayClick('right', 'Type')
+    await scene.rayClick('right', '#clear')
+    await expect.poll(() => scene.isShown('Clear history?')).toBe(true)
+    await scene.rayClick('right', '#note')
+    await expect.poll(async () => (await scene.inputState('#note')).focused).toBe(true)
+    for (const key of ['#key-o', '#key-k']) await scene.rayClick('right', key)
+    await expect.poll(async () => (await scene.inputState('#note')).value).toBe('ok')
+    expect(await scene.isShown('Clear history?')).toBe(true)
   })
 })

@@ -195,7 +195,10 @@ export default defineComponent({
         emulator: xr.store.value?.getState().emulator != null,
       }),
       /** What the renderer clears to, and whether the scene has a background (passthrough hides both). */
-      renderState: () => ({ clearAlpha: (tres.renderer as unknown as WebGLRenderer).getClearAlpha(), background: tres.scene.value.background != null }),
+      renderState: () => {
+        const renderer = tres.renderer as unknown as WebGLRenderer
+        return { clearAlpha: renderer.getClearAlpha(), background: tres.scene.value.background != null, foveation: renderer.xr.getFoveation() ?? null }
+      },
       size: (label: string) => targetFor(label).size.value ?? null,
       /** The value of the text input inside a component (an <XrTextField>), and whether it has focus. */
       inputState: (label: string) => {
@@ -209,6 +212,33 @@ export default defineComponent({
       /** A component's resolved background colour. */
       /** A uikit property of a label's component, as uikit resolved it (JSON-safe values only). */
       property: (label: string, key: string) => (targetFor(label).properties.value as Record<string, unknown>)[key] ?? null,
+      /** A plain three.js object by name: whether it is in the scene, and its world position. */
+      object(name: string) {
+        const found = tres.scene.value.getObjectByName(name)
+        if (!found) return { inScene: false, position: [0, 0, 0] as [number, number, number] }
+        const p = found.getWorldPosition(new Vector3())
+        return { inScene: true, position: [p.x, p.y, p.z] as [number, number, number] }
+      },
+      /** Turns the root a label is in around the vertical axis (to look at its back). */
+      turnRoot(label: string, yaw: number) {
+        const root = rootOf(targetFor(label)) as unknown as Object3D
+        root.rotation.y = yaw
+        root.updateMatrixWorld(true)
+      },
+      /** Renders now and reads the RGBA pixel at a CSS point on the canvas (browser mode). */
+      pixel(x: number, y: number): [number, number, number, number] {
+        const renderer = tres.renderer as unknown as WebGLRenderer
+        const camera = tres.camera.value!
+        renderer.render(tres.scene.value, camera)
+        const gl = renderer.getContext()
+        const canvas = renderer.domElement
+        const rect = canvas.getBoundingClientRect()
+        const px = Math.round(((x - rect.left) / rect.width) * gl.drawingBufferWidth)
+        const py = Math.round((1 - (y - rect.top) / rect.height) * gl.drawingBufferHeight)
+        const out = new Uint8Array(4)
+        gl.readPixels(px, py, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, out)
+        return [out[0]!, out[1]!, out[2]!, out[3]!]
+      },
       background: (label: string) => String((targetFor(label).properties.value as { backgroundColor?: unknown }).backgroundColor ?? ''),
       /** CSS pixel position of a point on a label's component (see worldPoint) on the 2D canvas. */
       screenPoint(label: string, fx = 0.5) {

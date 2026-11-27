@@ -31,6 +31,8 @@ export { XrKeyboard, keyboardLayouts, type XrKeyboardLayout, type XrKeyboardLayo
 export { XrThemeProvider } from './components/XrThemeProvider'
 export { webSpeechRecognizer, recordingRecognizer, type XrSpeechRecognizer, type XrSpeechSession, type XrSpeechHandle } from './runtime/speech'
 export { XrEnterButton } from './components/XrEnterButton'
+export { XrExitButton } from './components/XrExitButton'
+export { XrSessionMenu } from './components/XrSessionMenu'
 
 export { useXr } from './composables/useXr'
 export { useXrFrame } from './composables/useXrFrame'

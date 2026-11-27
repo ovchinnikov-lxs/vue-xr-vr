@@ -1,7 +1,20 @@
 import { Comment, Fragment, Text, h, inject, markRaw, onBeforeUnmount, provide, useAttrs, watch, type Slots, type VNode, type VNodeChild } from 'vue'
 import { Container, type Component as UikitComponent } from '@pmndrs/uikit'
+import { DoubleSide, MeshBasicMaterial } from 'three'
 import { FRAME_HUB, PRESS_HUB, UIKIT_PARENT } from './context'
 import { defaultFontFamilies } from './fonts'
+
+/**
+ * uikit's panel material, but drawn from both sides. uikit forces
+ * `side = FrontSide` right after it creates a panel material, so the side
+ * is pinned on the prototype and assignments are ignored.
+ */
+export class DoubleSidedPanelMaterial extends MeshBasicMaterial {}
+Object.defineProperty(DoubleSidedPanelMaterial.prototype, 'side', {
+  get: () => DoubleSide,
+  set: () => {},
+  configurable: true,
+})
 
 type Properties = Record<string, unknown>
 
@@ -15,8 +28,17 @@ type Properties = Record<string, unknown>
  *
  * `fontFamilies`: Inter with Cyrillic (see fonts.ts). A root can still set
  * its own through its properties.
+ *
+ * `panelMaterialClass`: the root's background (a window, a panel, a popup)
+ * shows from behind too, as a plain plate, so UI does not vanish when you
+ * walk around it. Not inherited: inner panels, text and icons stay
+ * front-only, so nothing shows through mirrored.
  */
-export const ROOT_DEFAULTS: Properties = { pointerEventsType: { deny: 'grab' }, fontFamilies: defaultFontFamilies }
+export const ROOT_DEFAULTS: Properties = {
+  pointerEventsType: { deny: 'grab' },
+  fontFamilies: defaultFontFamilies,
+  panelMaterialClass: DoubleSidedPanelMaterial,
+}
 
 /**
  * Binds one uikit component to the lifetime of a Vue component.

@@ -5,6 +5,7 @@ import { useXrTheme } from '../composables/useXrTheme'
 import { useUikitNode } from '../runtime/node'
 import { usePress } from '../runtime/press'
 import { activeTextTarget } from '../runtime/text-target'
+import { activeModalLayer } from '../runtime/modal'
 import { injectAppWide } from '../runtime/app-inject'
 import { XR_CONTROLLER } from '../runtime/context'
 import { webSpeechRecognizer, type XrSpeechHandle, type XrSpeechRecognizer } from '../runtime/speech'
@@ -308,6 +309,13 @@ export const XrKeyboard = defineComponent({
       }
     }
 
+    // Typing into a field inside an open dialog: draw and take rays above
+    // the dialog's backdrop, which otherwise covers the keyboard.
+    const raised = () => {
+      if (props.modelValue !== undefined) return {}
+      const layer = activeModalLayer()
+      return layer == null ? {} : { renderOrder: layer + 1, pointerEventsOrder: layer + 1 }
+    }
     const { render } = useUikitNode(
       (initial) => new Container(initial),
       ({ isRoot }) => {
@@ -327,6 +335,7 @@ export const XrKeyboard = defineComponent({
               }
             : {}),
           ...props.ui,
+          ...raised(),
           ...(hidden.value ? { display: 'none' } : {}),
         }
       },

@@ -28,4 +28,6 @@
 | [`<XrAnchor>`](./XrAnchor) | Keeps content at a spot in the room across sessions. |
 | [`<XrHandMenu>`](./XrHandMenu) | A menu above the palm when you turn it toward your face. |
 | [`<XrThemeProvider>`](./XrThemeProvider) | Theme for a part of the scene. |
+| [`<XrExitButton>`](./XrExitButton) | Button in the scene that ends the session. |
+| [`<XrSessionMenu>`](./XrSessionMenu) | Palm pinch asks to leave the session. |
 | [`<XrEnterButton>`](./XrEnterButton) | DOM button to enter VR or AR. |

@@ -24,7 +24,10 @@ export const XrScene = defineComponent({
   props: {
     /**
      * Options for the `@pmndrs/xr` store: session features (`handTracking`,
-     * `planeDetection`, `hitTest`, `anchors`...) and input config.
+     * `planeDetection`, `hitTest`, `anchors`...) and input config. Defaults
+     * to the device's native resolution (`frameBufferScaling: 'high'`) and
+     * no fixed foveation (`foveation: 0`), for sharp text; lower them to
+     * trade sharpness for GPU time.
      */
     options: { type: Object as PropType<Omit<XRStoreOptions<any>, 'emulate'>>, default: () => ({}) },
     /**
@@ -67,6 +70,13 @@ export const XrScene = defineComponent({
 
     const store = createXRStore(renderer.domElement, scene, getCamera, renderer.xr, {
       handTracking: true,
+      // Sharp text. The browser's default framebuffer on Quest is smaller
+      // than the display, and three.js turns fixed foveation all the way up
+      // (1), which blurs everything off-centre. A UI scene is cheap to draw,
+      // so render at the device's native resolution with no foveation. Apps
+      // that need the GPU time back can pass their own values in `options`.
+      frameBufferScaling: 'high',
+      foveation: 0,
       ...props.options,
       // TresJS already forwards mouse/touch events into the scene.
       htmlInput: false,

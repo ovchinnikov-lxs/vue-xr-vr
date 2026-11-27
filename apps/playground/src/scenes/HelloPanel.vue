@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watchEffect } from 'vue'
+import { computed, ref, shallowRef, watch, watchEffect } from 'vue'
 import type { Mesh } from 'three'
 import { Bell, BellOff, Heart, RotateCcw, Share2, Trash2 } from 'lucide'
 import {
@@ -7,6 +7,8 @@ import {
   XrButton,
   XrCheckbox,
   XrDialog,
+  XrExitButton,
+  XrSessionMenu,
   XrIcon,
   XrKeyboard,
   XrNumberInput,
@@ -97,6 +99,25 @@ const languageTab = computed({
 })
 
 const message = ref('')
+// On Quest: what the system keyboard did, last few events, to report from the headset.
+const keyboardLog = ref<string[]>([])
+const logKeyboard = (event: string) => {
+  const log = keyboardLog.value
+  if (event === 'input' && log.at(-1)?.startsWith('input')) {
+    const n = Number(log.at(-1)!.split('×')[1] ?? 1) + 1
+    keyboardLog.value = [...log.slice(0, -1), `input×${n}`]
+  } else keyboardLog.value = [...log, event].slice(-6)
+}
+watch(
+  () => xr.session.value,
+  (session, _, onCleanup) => {
+    if (!session) return
+    const onVisibility = () => logKeyboard(session.visibilityState)
+    session.addEventListener('visibilitychange', onVisibility)
+    onCleanup(() => session.removeEventListener('visibilitychange', onVisibility))
+  },
+  { immediate: true },
+)
 // Two dialogs stacked: "Clear history?" (with a field of its own) asks again in front of itself.
 const clearOpen = ref(false)
 const sureOpen = ref(false)
@@ -131,7 +152,11 @@ useXrFrame((delta) => {
   </TresMesh>
 
   <XrWindow v-model:position="windowPosition" name="window" :width="480">
-    <XrText variant="headline">vue-xr-ui</XrText>
+    <XrBox direction="row" align="center" justify="space-between">
+      <XrText variant="headline">vue-xr-ui</XrText>
+      <!-- Only in a session: the way out with hands alone (a left palm pinch also asks). -->
+      <XrExitButton name="exit" />
+    </XrBox>
     <XrText muted>
       Point a controller ray, pinch, or poke the buttons with your finger. Same click event for every input. Drag the bar below to move the window.
     </XrText>
@@ -237,8 +262,19 @@ useXrFrame((delta) => {
           <XrButton name="clear" variant="ghost" size="sm" :icon="Trash2" @click="clearOpen = true" />
         </XrTooltip>
       </XrBox>
-      <XrTextField v-model="message" name="message" placeholder="Привет! Type here…" @submit="send" />
+      <XrTextField
+        v-model="message"
+        name="message"
+        placeholder="Привет! Type here…"
+        @submit="(logKeyboard('enter'), send())"
+        @focus="logKeyboard('focus')"
+        @blur="logKeyboard('blur')"
+        @update:model-value="logKeyboard('input')"
+      />
       <XrText variant="caption" muted>{{ typeHint }}</XrText>
+      <XrText v-if="xr.systemKeyboard.value" name="keyboard-log" variant="caption" muted>
+        Keyboard events: {{ keyboardLog.join(' → ') || 'none yet' }}
+      </XrText>
       <XrTabs v-if="!xr.systemKeyboard.value" v-model="languageTab" name="languages" :tabs="languages.map((l) => l.toUpperCase())" block />
       <XrPanel variant="sunken" :padding="4" :gap="2">
         <XrText v-if="sent.length === 0" muted>Nothing sent yet</XrText>
@@ -309,4 +345,7 @@ useXrFrame((delta) => {
   <XrWindow v-if="tab === 'Type' && !xr.systemKeyboard.value" name="keyboard-window" :position="[0, 1.02, -0.8]">
     <XrKeyboard v-model:layout="language" name="keyboard" :layouts="[...languages]" enter-label="Send" />
   </XrWindow>
+
+  <!-- A left palm pinch asks to leave the session. -->
+  <XrSessionMenu />
 </template>

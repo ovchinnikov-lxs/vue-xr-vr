@@ -11,6 +11,7 @@ export function createXrController(): InternalXrController {
   const session = shallowRef<XRSession>()
   const mode = ref<XrMode | null>(null)
   const supported = ref({ vr: false, ar: false })
+  const ending = new WeakSet<XRSession>()
 
   if (typeof navigator !== 'undefined' && navigator.xr) {
     navigator.xr.isSessionSupported('immersive-vr').then((vr) => (supported.value.vr = vr), () => {})
@@ -37,7 +38,15 @@ export function createXrController(): InternalXrController {
       await requireStore().enterAR()
     },
     async exit() {
-      await session.value?.end()
+      const current = session.value
+      if (!current || ending.has(current)) return
+      ending.add(current)
+      // Called from a button in the scene, this runs inside @pmndrs/xr's
+      // pointer dispatch; ending the session tears its pointers down mid-way.
+      // Let the current frame finish first.
+      await new Promise((resolve) => setTimeout(resolve))
+      // A double press, or the session ended on its own meanwhile: once is enough.
+      await current.end().catch(() => {})
     },
     attach(next) {
       store.value = next

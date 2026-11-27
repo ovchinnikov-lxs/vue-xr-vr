@@ -1,7 +1,8 @@
-import { defineComponent, markRaw, onBeforeUnmount, ref, watch, type PropType } from 'vue'
+import { defineComponent, inject, markRaw, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { Container, Text } from '@pmndrs/uikit'
 import { useXrTheme } from '../composables/useXrTheme'
 import { useChildNode, useUikitNode } from '../runtime/node'
+import { RENDER_LAYER } from '../runtime/context'
 
 /**
  * Shows a short hint over (or under) whatever it wraps while a pointer
@@ -61,6 +62,7 @@ export const XrTooltip = defineComponent({
       (d) => d && ((visible.value = false), clear()),
     )
 
+    const layer = inject(RENDER_LAYER, undefined)
     const bubble = useChildNode(node, () => {
       const t = theme.value
       const gap = t.space[2]!
@@ -76,7 +78,7 @@ export const XrTooltip = defineComponent({
         // Drawn after its neighbours (text included) and a little in front
         // of them, like XrSelect's list. Not zIndex: that also pulls hit
         // tests 1 cm per step towards the pointer. Never a pointer target.
-        renderOrder: 1,
+        renderOrder: (layer?.value ?? 0) + 1,
         transformTranslateZ: gap,
         pointerEvents: 'none',
       }

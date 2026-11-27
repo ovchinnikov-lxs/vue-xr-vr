@@ -1,10 +1,11 @@
-import { defineComponent, h, inject, onBeforeUnmount, ref, watch, type PropType } from 'vue'
+import { computed, defineComponent, h, inject, markRaw, onBeforeUnmount, provide, ref, watch, type PropType } from 'vue'
 import { Container } from '@pmndrs/uikit'
-import { Vector3 } from 'three'
+import { BackSide, Color, Mesh, MeshBasicMaterial, SphereGeometry, SRGBColorSpace, Vector3 } from 'three'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
-import { XR_VIEW } from '../runtime/context'
-import { closeModal, modalStack, openModal } from '../runtime/modal'
+import { PRESS_HUB, RENDER_LAYER, SURFACE_HOST, XR_VIEW } from '../runtime/context'
+import { useXrFrame } from '../composables/useXrFrame'
+import { closeModal, modalLayers, modalStack, openModal } from '../runtime/modal'
 import { useUikitNode } from '../runtime/node'
 import { usePress, type ControlPointerEvent } from '../runtime/press'
 import { XrBox } from './XrBox'
@@ -14,12 +15,31 @@ import { XrText } from './XrText'
 
 type Vec3 = [number, number, number]
 
-/** How far the backdrop reaches around the dialog, in metres. */
-const BACKDROP_SIZE = 6
+/** Radius of the backdrop sphere around the head, in metres: well inside the camera's far plane. */
+const SHELL_RADIUS = 5
+const SHELL_GEOMETRY = new SphereGeometry(SHELL_RADIUS, 32, 16)
+/** The backdrop fades in over this long. */
+const FADE_MS = 150
+/** renderOrder / pointerEventsOrder of the first dialog's backdrop; each stacked dialog goes LAYER_STEP higher. */
+const DIALOG_LAYER = 100
+const LAYER_STEP = 10
+
+/** Stacking depth of each open dialog. */
+const dialogDepth = new WeakMap<object, number>()
+
+/** A CSS colour (`#rgb`, `#rrggbb`, `rgb()`, `rgba()`, a name) as a three.js colour and an alpha. */
+function parseColor(css: string): { color: Color; alpha: number } {
+  const rgba = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+%?))?\s*\)$/i.exec(css.trim())
+  if (rgba) {
+    const a = rgba[4]
+    const alpha = a == null ? 1 : a.endsWith('%') ? parseFloat(a) / 100 : parseFloat(a)
+    return { color: new Color().setRGB(+rgba[1]! / 255, +rgba[2]! / 255, +rgba[3]! / 255, SRGBColorSpace), alpha }
+  }
+  return { color: new Color(css), alpha: 1 }
+}
 /**
  * Default distance as a share of the theme's viewing distance: a step in
- * front of the panels at reading distance, so the backdrop covers them
- * (and wins the pointer hit test) instead of cutting through them.
+ * front of the panels at reading distance, so it reads as on top of them.
  */
 const NEARER = 0.75
 /** Each dialog opened over another comes this much closer, so the newer one is in front. */
@@ -40,10 +60,10 @@ const STACK_STEP = 0.85
  * ```
  *
  * It closes on its Close button, on Escape, and on a press on the backdrop
- * (every input: mouse, controller ray, pinch, fingertip). The backdrop is a
- * plane just behind the dialog: it blocks UI farther away than the dialog,
- * not objects between the viewer and it. Place it at the top level of the
- * scene (not inside another panel).
+ * (mouse, controller ray, pinch). The backdrop dims the whole scene around
+ * the viewer, wherever they look or walk, and takes every press that misses
+ * the dialog, so nothing behind it can be used. Place it at the top level
+ * of the scene (not inside another panel).
  *
  * While it is open, text fields outside it cannot take focus (a focused one
  * loses it, and XrKeyboard stops typing into it); on close, focus goes back
@@ -98,44 +118,84 @@ export const XrDialog = defineComponent({
       emit('update:open', false)
     }
 
-    // Only a press that starts and ends on the backdrop itself closes the
-    // dialog: presses on the panel bubble up here too.
-    let backdropNode: Container | undefined
+    // The backdrop: a sphere around the viewer's head, seen from inside,
+    // drawn over everything but the dialog (no depth test) and taking every
+    // ray that misses the dialog (a higher pointerEventsOrder than any UI).
+    // It dims the whole scene, near or far, and there is nothing to walk
+    // through: it moves with the head.
+    const layer = computed(() => DIALOG_LAYER + LAYER_STEP * depth.value)
+    const shell = markRaw(new Mesh(SHELL_GEOMETRY, new MeshBasicMaterial({ side: BackSide, transparent: true, depthTest: false, depthWrite: false })))
+    shell.name = 'backdrop'
+    // Rays only: a fingertip or a grab sphere is always "inside" it (its bounds hold the head).
+    Object.assign(shell, { pointerEventsType: { deny: ['grab', 'touch'] } })
+    let fade = 0
+    const scrim = computed(() => parseColor(theme.value.colors.scrim))
+    const ordered = shell as Mesh & { pointerEventsOrder?: number }
+    watch(
+      layer,
+      (order) => {
+        shell.renderOrder = order
+        ordered.pointerEventsOrder = order
+      },
+      { immediate: true },
+    )
     const press = usePress({
       disabled: () => !props.open || !props.backdrop || !props.closeOnBackdrop,
       // A sweep or drag across the backdrop is not a press outside.
-      cancelAfter: 0.01,
+      cancelAfter: SHELL_RADIUS * 0.02,
       onPress: () => close('backdrop'),
     })
-    const onBackdropDown = (event: ControlPointerEvent) => {
-      if (event.object === backdropNode) press.onPointerDown(event)
+    for (const [type, handler] of [
+      ['pointerdown', press.onPointerDown],
+      ['pointermove', press.onPointerMove],
+      ['pointerup', press.onPointerUp],
+      ['pointercancel', press.onPointerCancel],
+    ] as const) {
+      shell.addEventListener(type as never, ((event: ControlPointerEvent) => handler(event)) as never)
     }
+    const presses = inject(PRESS_HUB, undefined)
+    if (presses) onBeforeUnmount(presses.addRoot(shell))
+    const shellHead = new Vector3()
+    useXrFrame((delta) => {
+      const show = props.open && props.backdrop
+      const parent = node.parent
+      if (!show || !parent) {
+        fade = 0
+        shell.removeFromParent()
+        return
+      }
+      if (shell.parent !== parent) parent.add(shell)
+      const { color, alpha } = scrim.value
+      fade = Math.min(1, fade + delta / FADE_MS)
+      const material = shell.material
+      material.color.copy(color)
+      material.opacity = alpha * fade
+      if (view) view.headPosition(shellHead)
+      shell.position.copy(parent.worldToLocal(shellHead))
+    })
+    onBeforeUnmount(() => {
+      shell.removeFromParent()
+      shell.material.dispose()
+    })
 
     const { node, render } = useUikitNode(
       (initial) => new Container(initial),
-      () => {
-        const t = theme.value
-        const pixelSize = pixelSizeAt(distance())
-        const size = props.backdrop ? BACKDROP_SIZE / pixelSize : undefined
-        return {
-          pixelSize,
-          display: props.open ? 'flex' : 'none',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...(props.backdrop
-            ? {
-                width: size,
-                height: size,
-                backgroundColor: t.colors.scrim,
-                ...press,
-                onPointerDown: onBackdropDown,
-              }
-            : {}),
-        }
-      },
+      () => ({
+        pixelSize: pixelSizeAt(distance()),
+        display: props.open ? 'flex' : 'none',
+        alignItems: 'center',
+        justifyContent: 'center',
+        // Over the backdrop, in drawing and in hit tests. No depth test: it
+        // wins every ray, so nothing nearer may hide it either (uikit still
+        // orders its own parts).
+        renderOrder: layer.value + 1,
+        pointerEventsOrder: layer.value + 1,
+        depthTest: false,
+      }),
     )
-    backdropNode = node
-    node.name = 'backdrop'
+    node.name = 'dialog-root'
+    provide(RENDER_LAYER, computed(() => layer.value + 1))
+    provide(SURFACE_HOST, node)
 
     // Open in front of the viewer, level with their eyes, facing them.
     const head = new Vector3()
@@ -164,7 +224,12 @@ export const XrDialog = defineComponent({
       () => props.open,
       (open) => {
         if (open) {
-          depth.value = modalStack.value.filter((n) => n !== node).length
+          // One above the topmost open dialog (not the count: close the lower
+          // of two and reopen it, and it must still land on top).
+          const below = modalStack.value.filter((n) => n !== node)
+          depth.value = below.length === 0 ? 0 : Math.max(...below.map((n) => dialogDepth.get(n) ?? 0)) + 1
+          dialogDepth.set(node, depth.value)
+          modalLayers.set(node, layer.value + 1)
           openModal(node)
         } else {
           closeModal(node)

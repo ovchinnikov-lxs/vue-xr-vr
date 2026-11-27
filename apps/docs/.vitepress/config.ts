@@ -6,7 +6,7 @@ const components = [
   ['Controls', ['XrButton', 'XrIcon', 'XrToggle', 'XrCheckbox', 'XrRadioGroup', 'XrSlider', 'XrProgress', 'XrTabs', 'XrList', 'XrSelect', 'XrTooltip']],
   ['Text input', ['XrTextField', 'XrNumberInput', 'XrKeyboard']],
   ['Mixed reality', ['XrFollow', 'XrBillboard', 'XrPlanes', 'XrAnchor', 'XrHandMenu']],
-  ['App', ['XrThemeProvider', 'XrEnterButton']],
+  ['App', ['XrThemeProvider', 'XrEnterButton', 'XrExitButton', 'XrSessionMenu']],
 ] as const
 
 export default defineConfig({

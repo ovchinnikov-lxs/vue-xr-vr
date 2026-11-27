@@ -9,6 +9,21 @@ import { activeTextTarget, type TextTarget } from './text-target'
  */
 export const modalStack = shallowRef<readonly Object3D[]>([])
 
+/**
+ * The renderOrder / pointerEventsOrder each open dialog draws at, over its
+ * backdrop. An XrKeyboard typing into a field inside the top dialog goes
+ * above it, or the backdrop would swallow its rays.
+ */
+export const modalLayers = new WeakMap<Object3D, number>()
+
+/** The layer of the topmost dialog, when the field being typed into is inside it. */
+export function activeModalLayer(): number | undefined {
+  const top = modalStack.value.at(-1)
+  const target = activeTextTarget.value
+  if (!top || !target?.node || !contains(top, target.node)) return undefined
+  return modalLayers.get(top)
+}
+
 /** Per open dialog: the field to give focus back to when it closes. */
 interface FocusReturn {
   target: TextTarget | undefined

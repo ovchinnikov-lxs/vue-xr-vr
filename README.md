@@ -137,6 +137,8 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrPlanes>` | Draws the walls, tables and floor the headset found (plane detection), filtered by `labels`. `useXrPlanes()` gives the planes. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
+| `<XrExitButton>` | Button in the scene that ends the session (shown only in one); works with hands alone. |
+| `<XrSessionMenu>` | A palm pinch (left hand) asks "Leave VR?" with Stay / Exit. `hand`, `gesture`, `v-model:open`. |
 
 Every control takes the same input: mouse, controller ray, hand pinch ray and
 a fingertip poke. A press counts on release however long it is held, and a

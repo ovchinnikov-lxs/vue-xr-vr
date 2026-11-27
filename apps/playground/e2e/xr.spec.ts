@@ -26,7 +26,7 @@ test.describe('in the emulated Quest 3', () => {
     await expect.poll(() => scene.state()).toMatchObject({ presenting: true, mode: 'immersive-ar' })
     await scene.expectText('In session: immersive-ar')
     // The room shows through wherever nothing is drawn.
-    expect(await scene.renderState()).toEqual({ clearAlpha: 0, background: false })
+    expect(await scene.renderState()).toMatchObject({ clearAlpha: 0, background: false })
 
     await scene.exit()
     await expect.poll(() => scene.state()).toMatchObject({ presenting: false })

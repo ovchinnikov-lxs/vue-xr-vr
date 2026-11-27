@@ -17,7 +17,7 @@ test.describe('passthrough', () => {
     await page.getByRole('button', { name: 'Enter AR' }).click()
     await expect.poll(() => scene.state()).toMatchObject({ presenting: true, mode: 'immersive-ar' })
     await scene.expectText('Passthrough')
-    expect(await scene.renderState()).toEqual({ clearAlpha: 0, background: false })
+    expect(await scene.renderState()).toMatchObject({ clearAlpha: 0, background: false })
     await expect(page.getByRole('button', { name: 'Exit' })).toBeVisible()
   })
 })

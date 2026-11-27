@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { XrAnchor, XrBillboard, XrBox, XrButton, XrFollow, XrHandMenu, XrPanel, XrPlanes, XrText, XrToggle, XrWindow, useXr, useXrAnchor } from 'vue-xr-ui'
+import { XrAnchor, XrBillboard, XrBox, XrButton, XrExitButton, XrFollow, XrHandMenu, XrPanel, XrPlanes, XrSessionMenu, XrText, XrToggle, XrWindow, useXr, useXrAnchor } from 'vue-xr-ui'
 
 const xr = useXr()
 const status = computed(() => {
@@ -53,6 +53,7 @@ const noteState = computed(() => (stuckTo.value ? `On the ${stuckTo.value}` : la
       <XrToggle v-model="showSurfaces">Show surfaces</XrToggle>
       <XrButton name="forget-note" variant="secondary" size="sm" :disabled="!noteAnchor.saved.value" @click="noteAnchor.forget()">Forget note place</XrButton>
       <XrText variant="caption" muted>{{ follow ? hudState : 'Pinned' }}</XrText>
+      <XrExitButton name="exit" block />
     </XrPanel>
   </XrFollow>
 
@@ -61,8 +62,11 @@ const noteState = computed(() => (stuckTo.value ? `On the ${stuckTo.value}` : la
       <XrText variant="label">Hand menu</XrText>
       <XrButton name="menu-tap" size="sm" @click="taps++">Tapped {{ taps }}</XrButton>
       <XrToggle v-model="showSurfaces">Surfaces</XrToggle>
+      <XrExitButton name="menu-exit" block />
     </XrPanel>
   </XrHandMenu>
+  <!-- Same palm pose as the hand menu: no exit gesture while that menu is up. -->
+  <XrSessionMenu :gesture="!menuOpen" />
 
   <XrPlanes v-if="showSurfaces" :labels="['wall', 'table']" />
 

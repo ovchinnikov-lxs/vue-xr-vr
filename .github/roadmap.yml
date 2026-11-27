@@ -244,6 +244,33 @@ issues:
     milestone: "0.3 Docs site"
     labels: [docs, needs-headset]
 
+  # Found on the Quest 3, 2026-11-25; fixed 2026-11-27.
+  - title: "Quest system keyboard: no caret, typing does nothing, opens only once"
+    milestone: "0.3 Docs site"
+    labels: [bug, input, needs-headset]
+    body: |
+      Done when: a press focuses the field on its release (in the session's select event), closing the keyboard lets the next tap reopen it, e2e simulates Quest's keyboard lifecycle, and it works on the headset.
+  - title: "Panels vanish from behind: show a back plate"
+    milestone: "0.3 Docs site"
+    labels: [bug, component, needs-headset]
+    body: |
+      Done when: the outer plate of windows, dialogs and root panels draws from both sides, inner content stays front-only, and an e2e render check reads the back.
+  - title: "Dialog backdrop: dim the whole scene, not a plane you can walk through"
+    milestone: "0.3 Docs site"
+    labels: [bug, component, needs-headset]
+    body: |
+      Done when: the backdrop is a shell around the head that dims everything but the dialog and its popups, follows the head, and still closes the dialog on a ray press.
+  - title: "Blurry UI in the headset: native resolution, no fixed foveation"
+    milestone: "0.3 Docs site"
+    labels: [bug, perf, needs-headset]
+    body: |
+      Done when: XrScene defaults to native framebuffer scale and foveation 0, the docs explain what is inherent, and the headset confirms sharper text at a smooth frame rate.
+  - title: "Exit VR with hands only: XrExitButton and a palm-pinch session menu"
+    milestone: "0.3 Docs site"
+    labels: [component, input, needs-headset]
+    body: |
+      Done when: XrExitButton and XrSessionMenu exist with docs, the playground has both, and e2e covers ray, poke and the palm pinch.
+
   # ---------------- 0.4 Mixed reality ----------------
   - title: "Passthrough session polish: transparent background, AR enter button, room-scale origin"
     milestone: "0.4 Mixed reality"

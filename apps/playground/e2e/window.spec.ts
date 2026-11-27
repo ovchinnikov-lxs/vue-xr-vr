@@ -57,3 +57,15 @@ test.describe('moving a window in the emulated Quest 3', () => {
     expect(d[2]).toBeCloseTo(0.05, 1)
   })
 })
+
+test.describe('the back of a window', () => {
+  test('shows as a plain plate in the surface colour, not nothing', async ({ scene, page }) => {
+    // The panel's left padding: plain surface colour, nothing drawn on it.
+    const edge = await scene.screenPoint('#window', 0.015)
+    const surface = await page.evaluate(({ x, y }) => window.__xrTest!.pixel(x, y), edge)
+    await page.evaluate(() => window.__xrTest!.turnRoot('#window', Math.PI))
+    const centre = await scene.screenPoint('#window', 0.5)
+    const back = await page.evaluate(({ x, y }) => window.__xrTest!.pixel(x, y), centre)
+    for (let i = 0; i < 3; i++) expect(Math.abs(back[i]! - surface[i]!)).toBeLessThan(6)
+  })
+})

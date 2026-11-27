@@ -1,7 +1,7 @@
-import { Fragment, defineComponent, h, inject, markRaw, onBeforeUnmount, provide, type PropType } from 'vue'
+import { Fragment, computed, defineComponent, h, inject, markRaw, onBeforeUnmount, provide, type PropType } from 'vue'
 import { Container, type Component as UikitComponent } from '@pmndrs/uikit'
 import { Matrix4, Vector3 } from 'three'
-import { FRAME_HUB, PRESS_HUB, UIKIT_PARENT } from './context'
+import { FRAME_HUB, PRESS_HUB, RENDER_LAYER, UIKIT_PARENT } from './context'
 import { ROOT_DEFAULTS } from './node'
 
 const placement = new Matrix4()
@@ -21,8 +21,9 @@ export function layoutRootOf(component: UikitComponent): UikitComponent {
  * a scrolling or `overflow: hidden` ancestor of the anchor, the way a child
  * would be.
  *
- * It is drawn after the UI around it (`renderOrder` 1), takes pointers first
- * where it overlaps it (`pointerEventsOrder` 1), and sits `lift` dmm towards
+ * It is drawn after the UI around it (`renderOrder` one above its layer,
+ * see RENDER_LAYER), takes pointers first where it overlaps it (same
+ * `pointerEventsOrder`), and sits `lift` dmm towards
  * the viewer. Render the popup's content inside `<Portal>`.
  */
 export function usePopupLayer(
@@ -38,14 +39,18 @@ export function usePopupLayer(
 ) {
   const frames = inject(FRAME_HUB, undefined)
   const presses = inject(PRESS_HUB, undefined)
+  // Inside a dialog, above the dialog's own layer.
+  const layer = inject(RENDER_LAYER, undefined)
+  const order = () => (layer?.value ?? 0) + 1
   const root = markRaw(
-    new Container({ ...ROOT_DEFAULTS, flexDirection: 'column', renderOrder: 1, pointerEventsOrder: 1, display: 'none' } as never),
+    new Container({ ...ROOT_DEFAULTS, flexDirection: 'column', renderOrder: order(), pointerEventsOrder: order(), display: 'none' } as never),
   )
   let shown = false
   let lastTop: boolean | undefined
   let lastWidth = 0
   let lastPixelSize = 0
   let lastGap = 0
+  let lastOrder = order()
 
   const follow = (delta: number) => {
     const base = layoutRootOf(anchor)
@@ -72,9 +77,12 @@ export function usePopupLayer(
     const pixelSize = (base.properties.value as { pixelSize?: number }).pixelSize ?? 0.01
     const gap = options.gap()
     // Only touch uikit properties when they change: a reset re-runs layout.
-    if (!shown || top !== lastTop || size[0] !== lastWidth || pixelSize !== lastPixelSize || gap !== lastGap) {
+    const nowOrder = order()
+    if (!shown || top !== lastTop || size[0] !== lastWidth || pixelSize !== lastPixelSize || gap !== lastGap || nowOrder !== lastOrder) {
       root.setProperties({
         display: 'flex',
+        renderOrder: nowOrder,
+        pointerEventsOrder: nowOrder,
         width: size[0],
         pixelSize,
         anchorX: 'left',
@@ -87,6 +95,7 @@ export function usePopupLayer(
       lastWidth = size[0]
       lastPixelSize = pixelSize
       lastGap = gap
+      lastOrder = nowOrder
     }
     // The anchor's panel corner in the parent's space: the base root's own
     // placement (uikit keeps the panel transform out of position/rotation)
@@ -113,6 +122,8 @@ export function usePopupLayer(
     props: { root: { type: Object as PropType<UikitComponent>, required: true } },
     setup(props, { slots }) {
       provide(UIKIT_PARENT, props.root)
+      // A tooltip in the popup draws over the popup.
+      provide(RENDER_LAYER, computed(order))
       return () => h(Fragment, null, slots.default?.())
     },
   })

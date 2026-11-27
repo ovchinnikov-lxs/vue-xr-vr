@@ -70,5 +70,16 @@ export const XR_CONTROLLER: InjectionKey<XrController> = Symbol('vue-xr-ui:contr
 export const XR_THEME: InjectionKey<Ref<ThemeTokens>> = Symbol('vue-xr-ui:theme')
 export const PRESS_HUB: InjectionKey<PressHub> = Symbol('vue-xr-ui:press-hub')
 export const FRAME_HUB: InjectionKey<FrameHub> = Symbol('vue-xr-ui:frame-hub')
+/**
+ * The renderOrder (and pointerEventsOrder) of the UI around a component:
+ * 0 in the scene, higher inside a dialog, which is drawn over its backdrop.
+ * Things drawn on top of their surroundings (popups, tooltips) go one above.
+ */
+export const RENDER_LAYER: InjectionKey<Readonly<Ref<number>>> = Symbol('vue-xr-ui:render-layer')
+/**
+ * A frame without a background of its own (XrWindow, XrDialog): the
+ * XrPanel placed directly in it is the outer plate, drawn from both sides.
+ */
+export const SURFACE_HOST: InjectionKey<object> = Symbol('vue-xr-ui:surface-host')
 /** The uikit component a child should attach to. Absent for layout roots. */
 export const UIKIT_PARENT: InjectionKey<UikitComponent> = Symbol('vue-xr-ui:uikit-parent')

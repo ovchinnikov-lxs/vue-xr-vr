@@ -1,8 +1,9 @@
-import { defineComponent, type PropType } from 'vue'
+import { defineComponent, inject, type PropType } from 'vue'
 import { Container } from '@pmndrs/uikit'
 import { pixelSizeAt } from '@vue-xr-ui/tokens'
 import { useXrTheme } from '../composables/useXrTheme'
-import { useUikitNode } from '../runtime/node'
+import { DoubleSidedPanelMaterial, useUikitNode } from '../runtime/node'
+import { SURFACE_HOST, UIKIT_PARENT } from '../runtime/context'
 import { layoutProps, layoutToUikit, space } from '../runtime/layout'
 
 /**
@@ -29,6 +30,10 @@ export const XrPanel = defineComponent({
   },
   setup(props, { slots }) {
     const theme = useXrTheme()
+    // A root panel gets the double-sided plate from ROOT_DEFAULTS; so does
+    // the panel that is the body of a window or a dialog.
+    const host = inject(SURFACE_HOST, undefined)
+    const outer = host != null && host === inject(UIKIT_PARENT, undefined)
     const { render } = useUikitNode(
       (initial) => new Container(initial),
       ({ isRoot }) => {
@@ -45,6 +50,7 @@ export const XrPanel = defineComponent({
           color: t.colors.text,
           fontSize: t.typography.body.fontSize,
           lineHeight: t.typography.body.lineHeight,
+          ...(outer ? { panelMaterialClass: DoubleSidedPanelMaterial } : {}),
           ...(props.material ? { panelMaterialClass: props.material } : {}),
           ...layoutToUikit(t, props),
           ...props.ui,

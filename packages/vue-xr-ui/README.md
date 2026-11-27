@@ -129,6 +129,8 @@ Full guide: [Getting started](https://vue-xr-ui.vercel.app/guide/getting-started
 | `<XrKeyboard>` | On-screen keyboard. `layouts`: built-in `en` `ru` `uk` `de` `fr` `es` and/or your own (`{ label, name, locale, rows }`), `v-model:layout`, `digits`, `symbols` (?123 page), `spaceLabel`, `keySize`, `enterLabel`, `voice`. Shift (double tap for caps lock), held Backspace repeats. Types into the last focused `<XrTextField>`, or edits its own `v-model`. |
 | `<XrThemeProvider>` | A theme for everything inside it: `theme` and/or `accent`. |
 | `<XrEnterButton>` | DOM button to enter/exit VR or AR. |
+| `<XrExitButton>` | Button in the scene that ends the session (shown only in one); works with hands alone. |
+| `<XrSessionMenu>` | A palm pinch (left hand) asks "Leave VR?" with Stay / Exit. `hand`, `gesture`, `v-model:open`. |
 
 Every control takes the same input: mouse, controller ray, hand pinch ray and
 a fingertip poke. A press counts on release however long it is held, and a

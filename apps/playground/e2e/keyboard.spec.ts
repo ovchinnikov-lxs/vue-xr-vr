@@ -216,6 +216,7 @@ test.describe('Quest system keyboard', () => {
       xr.requestSession = async (...args) => {
         const session = await request(...args)
         Object.defineProperty(session, 'isSystemKeyboardSupported', { value: true })
+        ;(window as unknown as { __xrSession: XRSession }).__xrSession = session
         return session
       }
     })
@@ -234,5 +235,79 @@ test.describe('Quest system keyboard', () => {
     await expect.poll(async () => (await scene.inputState(field)).value).toBe('hi!')
     await expect.poll(async () => (await scene.inputState(field)).selection).toEqual([3, 3])
     expect(await scene.isShown('#key-q')).toBe(false)
+  })
+
+  test('Quest keyboard lifecycle: the session blurs while it is open, and the field can be typed in again', async ({ scene, page }) => {
+    // What Quest Browser does: a focused field opens the keyboard and the session
+    // turns visible-blurred (our pointers stop); the keyboard writes its own
+    // buffer into the field; closing it blurs the field and the session is visible again.
+    await page.evaluate(() => {
+      const w = window as unknown as { __xrSession: XRSession; __vis: string }
+      const session = w.__xrSession
+      w.__vis = 'visible'
+      Object.defineProperty(session, 'visibilityState', { get: () => w.__vis, configurable: true })
+      const setVis = (v: string) => {
+        w.__vis = v
+        session.dispatchEvent(new Event('visibilitychange'))
+      }
+      document.addEventListener('focusin', (e) => {
+        if (e.target instanceof HTMLInputElement) setVis('visible-blurred')
+      })
+      document.addEventListener('focusout', (e) => {
+        if (e.target instanceof HTMLInputElement) setVis('visible')
+      })
+    })
+    const questType = (buffer: string) =>
+      page.evaluate((buffer) => {
+        const el = document.activeElement as HTMLInputElement
+        el.value = buffer
+        el.setSelectionRange(buffer.length, buffer.length)
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+      }, buffer)
+    const closeQuestKeyboard = () => page.evaluate(() => (document.activeElement as HTMLElement).blur())
+
+    const round = async (word: string, press: () => Promise<void>) => {
+      await press()
+      await expect.poll(async () => (await scene.inputState(field)).focused).toBe(true)
+      await questType(word)
+      await expect.poll(async () => (await scene.inputState(field)).value).toBe(word)
+      await closeQuestKeyboard()
+      await expect.poll(async () => (await scene.inputState(field)).focused).toBe(false)
+    }
+    await round('one', () => scene.rayClick('right', field))
+    await round('two', () => scene.rayClick('right', field))
+    await scene.setInputMode('hand')
+    await round('three', () => scene.poke('right', field))
+  })
+
+  test('closing the Quest keyboard without a blur still lets a tap reopen it', async ({ scene, page }) => {
+    // Some ways of closing it may give the session its focus back while the
+    // field keeps DOM focus: the field drops it, so the next tap is a fresh focus.
+    await page.evaluate(() => {
+      const w = window as unknown as { __xrSession: XRSession; __vis: string; __focusins: number }
+      const session = w.__xrSession
+      w.__vis = 'visible'
+      w.__focusins = 0
+      Object.defineProperty(session, 'visibilityState', { get: () => w.__vis, configurable: true })
+      document.addEventListener('focusin', (e) => {
+        if (!(e.target instanceof HTMLInputElement)) return
+        w.__focusins++
+        w.__vis = 'visible-blurred'
+        session.dispatchEvent(new Event('visibilitychange'))
+      })
+    })
+    const focusins = () => page.evaluate(() => (window as unknown as { __focusins: number }).__focusins)
+    await scene.rayClick('right', field)
+    await expect.poll(focusins).toBe(1)
+    // The keyboard closes: the session is visible again, the field was not blurred by the browser.
+    await page.evaluate(() => {
+      const w = window as unknown as { __xrSession: XRSession; __vis: string }
+      w.__vis = 'visible'
+      w.__xrSession.dispatchEvent(new Event('visibilitychange'))
+    })
+    await expect.poll(async () => (await scene.inputState(field)).focused).toBe(false)
+    await scene.rayClick('right', field)
+    await expect.poll(focusins).toBe(2)
+    await expect.poll(async () => (await scene.inputState(field)).focused).toBe(true)
   })
 })

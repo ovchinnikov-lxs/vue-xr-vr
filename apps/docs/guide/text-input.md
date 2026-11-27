@@ -27,6 +27,18 @@ window the keyboard sits in:
 Pass `:prefer-system-keyboard="false"` to keep `<XrKeyboard>` anyway. A
 keyboard with `v-model` always shows: it is the only way to edit its string.
 
+How the field works with it:
+
+- A press focuses the field on its **release** (inside the session's
+  `select` event for a trigger or pinch, as Meta's sample does), not on the
+  press: the keyboard must not open under a held trigger.
+- While the keyboard is open the session is `visible-blurred` and the
+  scene gets no pointer input; the keyboard writes into the field.
+- Closing the keyboard (its Done key, or a press beside it) takes the focus
+  off the field, so the next tap opens the keyboard again.
+- The keyboard starts each opening with its own empty text: its first key
+  replaces what was in the field. That is Quest Browser's behaviour.
+
 ## Layouts
 
 Built in: `en` `ru` `uk` `de` `fr` `es`. Add your own:
